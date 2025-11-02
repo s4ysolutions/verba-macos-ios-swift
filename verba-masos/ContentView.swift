@@ -5,9 +5,12 @@
 //  Created by Dolin Sergey on 2. 11. 2025..
 //
 
+import core
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.translationService) private var translationService: TranslationService<TranslationRestRepository>
+
     @State private var clipboardText: String = ""
     @State private var middleText: String = """
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. \
@@ -81,67 +84,71 @@ struct ContentView: View {
 
     private var appBecameActivePublisher: NotificationCenter.Publisher {
         #if os(macOS)
-        return NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+            return NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
         #else
-        return NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+            return NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
         #endif
     }
 
     private func updateClipboardText() {
         #if os(macOS)
-        if let str = NSPasteboard.general.string(forType: .string) {
-            clipboardText = str
-        } else {
-            clipboardText = ""
-        }
+            if let str = NSPasteboard.general.string(forType: .string) {
+                clipboardText = str
+            } else {
+                clipboardText = ""
+            }
         #else
-        clipboardText = UIPasteboard.general.string ?? ""
+            clipboardText = UIPasteboard.general.string ?? ""
         #endif
+        try {
+            translationService.translate(from: TranslationRequest.create(
+                sourceText: clipboardText,
+                sourceLang: "english",
+                targetLang: "русский",
+            ).get())
+        }
     }
+    // MARK: - Translate
 
     // MARK: - UI helpers
 
     @ViewBuilder
     private func selectableText(_ text: String) -> some View {
         #if os(macOS)
-        Text(text)
-            .textSelection(.enabled)
-            .font(.system(.body, design: .default))
+            Text(text)
+                .textSelection(.enabled)
+                .font(.system(.body, design: .default))
         #else
-        // On iOS 15+, Text supports textSelection too
-        Text(text)
-            .textSelection(.enabled)
-            .font(.body)
+            Text(text)
+                .textSelection(.enabled)
+                .font(.body)
         #endif
     }
 
     @ViewBuilder
     private func panelBackground<Content: View>(_ content: Content) -> some View {
         #if os(macOS)
-        content
-            .background(Color(NSColor.textBackgroundColor))
+            content
+                .background(Color(NSColor.textBackgroundColor))
         #else
-        content
-            .background(Color(UIColor.systemBackground))
+            content
+                .background(Color(UIColor.systemBackground))
         #endif
     }
 
     // MARK: - Actions
 
     private func handleOK() {
-        // Wire this up to your intended behavior (e.g., accept, close window, etc.)
         print("OK tapped")
         #if os(macOS)
-        // Example: close key window
-        NSApp.keyWindow?.performClose(nil)
+            NSApp.keyWindow?.performClose(nil)
         #endif
     }
 
     private func handleCancel() {
-        // Wire this up to your intended behavior (e.g., cancel, close window, etc.)
         print("Cancel tapped")
         #if os(macOS)
-        NSApp.keyWindow?.performClose(nil)
+            NSApp.keyWindow?.performClose(nil)
         #endif
     }
 }

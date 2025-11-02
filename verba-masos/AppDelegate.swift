@@ -25,60 +25,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     // Bring the SwiftUI WindowGroup window to front and focus it.
-    /*
-    private func bringMainWindowToFront() {
-        // First hop to main to ensure we’re on the UI thread.
-        DispatchQueue.main.async {
-            Self.logger.debug("DispatchQueue.main.async")
-            // Activate app immediately.
-            NSApp.unhide(nil)
-            NSApp.activate(ignoringOtherApps: true)
-
-            // Defer the actual window presentation to the next runloop so the status item event finishes.
-            DispatchQueue.main.async {
-                Self.logger.debug("DispatchQueue.main.async 2")
-                // If we already have our own window reference and it's usable, use it.
-                if let window = self.mainWindow, self.isUsableContentWindow(window) {
-                    Self.logger.debug("window = self.mainWindow, self.isUsableContentWindow(window)")
-                    self.repositionIfNeeded(window)
-                    self.present(window)
-                    return
-                } else if let window = self.mainWindow, !self.isUsableContentWindow(window) {
-                    Self.logger.debug("window = self.mainWindow, !self.isUsableContentWindow(window) ")
-                    self.mainWindow = nil
-                }
-
-                // Try to find an existing content window that is not the status bar window.
-                if let window = NSApp.windows.first(where: { self.isUsableContentWindow($0) }) {
-                    Self.logger.debug("NSApp.windows.first")
-                    self.mainWindow = window
-                    self.repositionIfNeeded(window)
-                    self.present(window)
-                    return
-                }
-
-                Self.logger.debug("create new window")
-                // Create a new window hosting ContentView.
-                let hosting = NSHostingController(rootView: ContentView())
-                let window = NSWindow(
-                    contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
-                    styleMask: [.titled, .closable, .miniaturizable, .resizable],
-                    backing: .buffered,
-                    defer: false
-                )
-                window.center()
-                window.title = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "App"
-                window.contentViewController = hosting
-                window.isReleasedWhenClosed = false
-                window.delegate = self
-
-                self.mainWindow = window
-                self.repositionIfNeeded(window)
-                self.present(window)
-            }
-        }
-    }*/
-
     private func bringMainWindowToFront() {
         // Single async is enough - let status item event finish
         DispatchQueue.main.async {
@@ -128,7 +74,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     // MARK: - NSWindowDelegate
-
     func windowWillClose(_ notification: Notification) {
         guard let window = notification.object as? NSWindow else { return }
         if window === mainWindow {
@@ -137,33 +82,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     // MARK: - Helpers
-    /*
-    private func present(_ window: NSWindow) {
-        Self.logger.debug("present")
-        // Ensure app is unhidden.
-        NSApp.unhide(nil)
-
-        // Stronger global activation — tends to be more reliable from status item callbacks.
-        let options: NSApplication.ActivationOptions = [.activateIgnoringOtherApps, .activateAllWindows]
-        NSRunningApplication.current.activate(options: options)
-
-        // If minimized, restore first.
-        if window.isMiniaturized {
-            Self.logger.debug("window.deminiaturize")
-            window.deminiaturize(nil)
-        }
-
-        // Make sure it's visible in our app’s stack.
-        window.orderFront(nil)
-
-        // Next runloop: assert key status and activate again to "win" focus.
-        DispatchQueue.main.async {
-            Self.logger.debug("window.makeKeyAndOrderFront(nil)")
-            NSRunningApplication.current.activate(options: options)
-            window.makeKeyAndOrderFront(nil)
-        }
-    }*/
-
     private func present(_ window: NSWindow) {
         Self.logger.debug("present")
 
