@@ -19,71 +19,134 @@ struct ContentView: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            let totalHeight = geo.size.height
-            let topHeight = totalHeight * (1.0 / 6.0)
-            let middleHeight = totalHeight * (1.0 / 2.0)
-            let bottomHeight = totalHeight * (1.0 / 3.0)
-            let vm = viewModel
+        let vm = viewModel
 
-            VStack(spacing: 0) {
-                // Top panel
-                panelBackground(
-                    ScrollView {
-                        selectableText(vm.translatingText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+        // GeometryReader { geo in
+        // let totalHeight = geo.size.height
+        // let topHeight = totalHeight * (1.0 / 6.0)
+        // let middleHeight = totalHeight * (1.0 / 2.0)
+        // let bottomHeight = totalHeight * (1.0 / 3.0)
+
+        VStack(spacing: 0) {
+            GeometryReader { geo in
+
+                VStack(spacing: 0) {
+                    // Top panel
+                    panelBackground(
+                        HStack(alignment: .top, spacing: 0) {
+                            ScrollView {
+                                editableText($viewModel.translatingText)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding([.top, .bottom])
+                            }
                             .padding()
-                    }
-                )
-                .frame(height: topHeight)
-
-                Divider()
-
-                // Middle panel
-                if vm.isLoading {
-                    panelBackground(
-                        ProgressView("Translating...")
-                    )
-                    .frame(height: middleHeight)
-                } else {
-                    panelBackground(
-                        ScrollView {
-                            selectableText(vm.translatedText)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
+                            VStack(alignment: .trailing, spacing: 0) {
+                                TextField(NSLocalizedString("lable.from", value: "From:", comment: "A language to translate from"),
+                                          text: $viewModel.fromLanguage)
+                                    // .frame(maxWidth: 150)
+                                    .padding()
+                                HStack {
+                                    Spacer()
+                                    Button(NSLocalizedString(
+                                        "label.translate",
+                                        value: "Translate",
+                                        comment: "Send the content of the text field to the translation service"))
+                                    {
+                                        handleTranslate()
+                                    }
+                                    .padding([.trailing, .leading])
+                                    .buttonStyle(.borderedProminent)
+                                    //.controlSize(.large)
+                                   // keyboardShortcut(.return, modifiers: .command)
+                                    //.keyboardShortcut(.defaultAction)
+                                    .disabled(viewModel.isLoading)
+                                }
+                            }
+                            .fixedSize(horizontal: true, vertical: false)
                         }
                     )
-                    .frame(height: middleHeight)
+                    .frame(height: geo.size.height * (2.0 / 9.0)) // 2 -
+                    // .frame(maxHeight: .infinity)
+                    // .frame(height: topHeight)
+
+                    Divider()
+
+                    // Middle panel
+                    if vm.isLoading {
+                        panelBackground(
+                            ProgressView("Translating...")
+                        )
+                        .frame(height: geo.size.height * (7.0 / 9.0))
+                        // .frame(minHeight: 0)
+                        // .layoutPriority(2)
+                        // --
+                        // .frame(height: middleHeight)
+                    } else {
+                        panelBackground(
+                            HStack(alignment: .top, spacing: 0) {
+                                ScrollView {
+                                    editableText($viewModel.translatedText)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding()
+                                }
+                                .padding([.top, .bottom])
+                                VStack(alignment: .trailing, spacing: 0) {
+                                    TextField(NSLocalizedString("label.to", value: "To:", comment: "A language to translate to"),
+                                              text: $viewModel.toLanguage)
+                                        // .frame(maxWidth: 150)
+                                        .padding()
+                                    HStack {
+                                        Spacer()
+                                        Button(NSLocalizedString(
+                                            "label.copy",
+                                            value: "Copy",
+                                            comment: "Copy the translated text to the clipboard")) {
+                                                handleCopy()
+                                            }.padding([.trailing, .leading])
+                                    }
+                                }
+                                .fixedSize(horizontal: true, vertical: false)
+                            }
+                        )
+                        .frame(height: geo.size.height * (7.0 / 9.0))
+                        // .frame(minHeight: 0)
+                        // .layoutPriority(2)
+                        // --
+                        // .frame(height: middleHeight)
+                    }
                 }
+            }
+/*
+            Divider()
 
-                Divider()
-
-                // Bottom panel
-                panelBackground(
-                    HStack {
-                        Spacer()
-                        Button("Cancel") {
-                            handleCancel()
-                        }
-                        .keyboardShortcut(.cancelAction)
-
-                        Button("OK") {
-                            handleOK()
-                        }
-                        .keyboardShortcut(.defaultAction)
+            // Bottom panel
+            panelBackground(
+                HStack {
+                    Spacer()
+                    Button("Cancel") {
+                        handleCancel()
                     }
-                    .padding()
-                )
-                .frame(height: bottomHeight)
-            }
-            .onAppear {
-                updateClipboardText()
-            }
-            // Update when the app becomes active (regains focusInsert)
-            .onReceive(appBecameActivePublisher) { _ in
-                updateClipboardText()
-            }
+                    .keyboardShortcut(.cancelAction)
+                    /*
+                                        Button("OK") {
+                                            handleOK()
+                                        }
+                                        .keyboardShortcut(.defaultAction)
+                     */
+                }
+                .padding()
+            )
+            // .frame(height: bottomHeight)
+ */
         }
+        .onAppear {
+            updateClipboardText()
+        }
+        // Update when the app becomes active (regains focusInsert)
+        .onReceive(appBecameActivePublisher) { _ in
+            updateClipboardText()
+        }
+        // }
         .padding(.vertical, 0)
         .padding(.horizontal, 0)
     }
@@ -99,6 +162,10 @@ struct ContentView: View {
     }
 
     private func updateClipboardText() {
+        if (viewModel.firstTime) {
+            viewModel.firstTime = false
+            return
+        }
         #if os(macOS)
             let str = NSPasteboard.general.string(forType: .string) ?? ""
         #else
@@ -126,6 +193,19 @@ struct ContentView: View {
     }
 
     @ViewBuilder
+    private func editableText(_ text: Binding<String>) -> some View {
+        #if os(macOS)
+            TextEditor(text: text)
+                .textSelection(.enabled)
+                .font(.system(.body, design: .default))
+        #else
+            TextEditor(text: text)
+                .textSelection(.enabled)
+                .font(.body)
+        #endif
+    }
+
+    @ViewBuilder
     private func panelBackground<Content: View>(_ content: Content) -> some View {
         #if os(macOS)
             content
@@ -140,14 +220,9 @@ struct ContentView: View {
 
     private func handleOK() {
         print("OK tapped")
-        Task{
-            await viewModel.translate(text: viewModel.translatingText, force: true)
-        }
-        /*
-         #if os(macOS)
-             NSApp.keyWindow?.performClose(nil)
-         #endif
-          */
+        #if os(macOS)
+            NSApp.keyWindow?.performClose(nil)
+        #endif
     }
 
     private func handleCancel() {
@@ -155,6 +230,16 @@ struct ContentView: View {
         #if os(macOS)
             NSApp.keyWindow?.performClose(nil)
         #endif
+    }
+
+    private func handleTranslate() {
+        Task {
+            await viewModel.translate(text: viewModel.translatingText, force: true)
+        }
+    }
+
+    private func handleCopy() {
+        viewModel.copyToClipboard(viewModel.translatedText)
     }
 }
 

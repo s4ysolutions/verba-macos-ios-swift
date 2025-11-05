@@ -18,7 +18,7 @@ struct verba_masosApp: App {
 
     @available(macOS 13.0, *)
     private var modernScene: some Scene {
-        WindowGroup("MainWindow") {
+        WindowGroup("Verba") {
             ContentView(translateUseCase: translationService)
         }
         .defaultSize(width: 800, height: 600)
@@ -30,7 +30,7 @@ struct verba_masosApp: App {
 
     @available(macOS, introduced: 11.0, obsoleted: 13.0)
     private var legacyScene: some Scene {
-        WindowGroup("MainWindow") {
+        WindowGroup("Verba") {
             ContentView(translateUseCase: translationService)
         }
         .commands {

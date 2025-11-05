@@ -3,8 +3,8 @@ import OSLog
 import CryptoKit
 
 public struct TranslationRestRepository: TranslationRepository {
-    // private static let url = URL(string: "https://verba.s4y.solutions/translation")!
-    static let url = URL(string: "http://localhost:4000/translation")!
+    private static let url = URL(string: "https://verba.s4y.solutions/translation")!
+    // static let url = URL(string: "http://localhost:4000/translation")!
     private let secret: String
 
     public init() {

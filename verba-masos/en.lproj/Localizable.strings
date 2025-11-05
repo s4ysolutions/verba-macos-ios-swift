@@ -1,2 +1,6 @@
+"label.copy" = "Copy";
+"label.from" = "Source language";
+"label.translate" = "Translate";
+"label.to" = "Target language";
 "menu.show" = "Show!";
 "menu.quit" = "Quit";

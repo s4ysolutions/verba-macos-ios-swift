@@ -1,2 +1,6 @@
+"label.copy" = "Копировать";
+"label.from" = "Исходный язык";
+"label.translate" = "Перевести";
+"label.to" = "Язык перевода";
 "menu.show" = "Показать";
 "menu.quit" = "Завершить";

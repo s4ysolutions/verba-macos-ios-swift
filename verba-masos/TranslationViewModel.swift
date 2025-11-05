@@ -9,16 +9,33 @@ final class TranslationViewModel: ObservableObject {
     @Published var translatedText: String = ""
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var fromLanguage: String = "english"
+    @Published var toLanguage: String = "russian"
+    var firstTime: Bool = true
+
+    private var lastTranslatedText: String = "" // non-edited translated text
 
     private let translator: any TranslateUseCase
+    private let userDefaults: UserDefaults
+    private static let fromLanguageKey = "translation.fromLanguage"
+    private static let toLanguageKey = "translation.toLanguage"
 
-    init(translator: TranslateUseCase) {
+    init(translator: TranslateUseCase, userDefaults: UserDefaults = .standard) {
         self.translator = translator
+        self.userDefaults = userDefaults
+
+        // Load persisted languages if available
+        if let savedFrom = userDefaults.string(forKey: Self.fromLanguageKey), !savedFrom.isEmpty {
+            self.fromLanguage = savedFrom
+        }
+        if let savedTo = userDefaults.string(forKey: Self.toLanguageKey), !savedTo.isEmpty {
+            self.toLanguage = savedTo
+        }
     }
 
     func translate(text: String, force: Bool) async {
         logger.debug("translate: \(text)")
-        if text == translatedText {
+        if text == translatedText || text == lastTranslatedText {
             logger.debug("No need to translate, its result of translation")
             return
         }
@@ -32,13 +49,17 @@ final class TranslationViewModel: ObservableObject {
         }
         translatingText = text
 
+        // Persist current language selections
+        userDefaults.set(fromLanguage, forKey: Self.fromLanguageKey)
+        userDefaults.set(toLanguage, forKey: Self.toLanguageKey)
+
         isLoading = true
         errorMessage = nil
 
         let requestParsed = TranslationRequest.create(
             sourceText: text,
-            sourceLang: "english",
-            targetLang: "русский",
+            sourceLang: fromLanguage,
+            targetLang: toLanguage,
             mode: "auto",
             provider: "google",
             quality: "optimal"
@@ -52,6 +73,7 @@ final class TranslationViewModel: ObservableObject {
             switch result {
             case let .success(text):
                 translatedText = text
+                lastTranslatedText = text
                 // Copy to clipboard on success
                 copyToClipboard(text)
             case let .failure(error):
@@ -66,7 +88,7 @@ final class TranslationViewModel: ObservableObject {
         isLoading = false
     }
 
-    private func copyToClipboard(_ text: String) {
+    func copyToClipboard(_ text: String) {
         if text.isEmpty {
             return
         }
