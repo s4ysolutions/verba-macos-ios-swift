@@ -1,17 +1,17 @@
-//
-//  verba_iosApp.swift
-//  verba-ios
-//
-//  Created by Dolin Sergey on 2. 11. 2025..
-//
-
 import SwiftUI
+import core
 
 @main
 struct verba_iosApp: App {
+    // Create a shared service that conforms to both TranslateUseCase and GetProvidersUseCase
+    private let translationService = TranslationService(translationRepository: TranslationRestRepository())
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(
+                translateUseCase: translationService,
+                getProvidersUseCase: translationService
+            )
         }
     }
 }

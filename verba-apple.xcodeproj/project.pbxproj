@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		41A9B0022EB802EA0055EACB /* core in Frameworks */ = {isa = PBXBuildFile; productRef = 41A9B0012EB802EA0055EACB /* core */; };
-		41EFFCF02EBB34DA00723517 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 41EFFCEF2EBB34DA00723517 /* Secrets.xcconfig */; };
+		41CEE95F2EBFDB1400EA64EA /* core in Frameworks */ = {isa = PBXBuildFile; productRef = 41CEE95E2EBFDB1400EA64EA /* core */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -43,7 +43,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		417A1F142EBF2F6E00BF9D1C /* verba-apple.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "verba-apple.xcodeproj"; sourceTree = SOURCE_ROOT; };
 		41A35C1E2EB7D94E009B2ED9 /* Verba.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Verba.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		41A35C2B2EB7D94F009B2ED9 /* verba-masosTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "verba-masosTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		41A35C352EB7D94F009B2ED9 /* verba-masosUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "verba-masosUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -54,6 +53,22 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		41CEE9612EBFDF5F00EA64EA /* Exceptions for "verba-shared" folder in "verba-ios" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"/Localized: Localizable.strings",
+				ContentView.swift,
+				TranslationViewModel.swift,
+			);
+			target = 41A35C492EB7D97C009B2ED9 /* verba-ios */;
+		};
+		41CEE9C12EBFE73B00EA64EA /* Exceptions for "verba-ios" folder in "verba-ios" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 41A35C492EB7D97C009B2ED9 /* verba-ios */;
+		};
 		41EFFCF22EBB68E200723517 /* Exceptions for "verba-masos" folder in "verba-masos" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -84,6 +99,9 @@
 		};
 		41A35C4B2EB7D97C009B2ED9 /* verba-ios */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				41CEE9C12EBFE73B00EA64EA /* Exceptions for "verba-ios" folder in "verba-ios" target */,
+			);
 			path = "verba-ios";
 			sourceTree = "<group>";
 		};
@@ -95,6 +113,14 @@
 		41A35C632EB7D97D009B2ED9 /* verba-iosUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "verba-iosUITests";
+			sourceTree = "<group>";
+		};
+		41CEE95A2EBFDA7D00EA64EA /* verba-shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				41CEE9612EBFDF5F00EA64EA /* Exceptions for "verba-shared" folder in "verba-ios" target */,
+			);
+			path = "verba-shared";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -126,6 +152,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41CEE95F2EBFDB1400EA64EA /* core in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -149,7 +176,7 @@
 		41A35C132EB7D92C009B2ED9 = {
 			isa = PBXGroup;
 			children = (
-				417A1F142EBF2F6E00BF9D1C /* verba-apple.xcodeproj */,
+				41CEE95A2EBFDA7D00EA64EA /* verba-shared */,
 				41A35C202EB7D94E009B2ED9 /* verba-masos */,
 				41A35C2E2EB7D94F009B2ED9 /* verba-masosTests */,
 				41A35C382EB7D94F009B2ED9 /* verba-masosUITests */,
@@ -199,6 +226,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				41A35C202EB7D94E009B2ED9 /* verba-masos */,
+				41CEE95A2EBFDA7D00EA64EA /* verba-shared */,
 			);
 			name = "verba-masos";
 			packageProductDependencies = (
@@ -271,6 +299,7 @@
 			);
 			name = "verba-ios";
 			packageProductDependencies = (
+				41CEE95E2EBFDB1400EA64EA /* core */,
 			);
 			productName = "verba-ios";
 			productReference = 41A35C4A2EB7D97C009B2ED9 /* verba-ios.app */;
@@ -389,7 +418,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				41EFFCF02EBB34DA00723517 /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1013,6 +1041,7 @@
 		};
 		41A35C692EB7D97D009B2ED9 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 41EFFCEF2EBB34DA00723517 /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1070,6 +1099,9 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "verba-ios/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Verba;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -1102,6 +1134,7 @@
 		};
 		41A35C6A2EB7D97D009B2ED9 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 41EFFCEF2EBB34DA00723517 /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1153,6 +1186,9 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "verba-ios/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Verba;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -1555,6 +1591,11 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		41A9B0012EB802EA0055EACB /* core */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 41A9AFFF2EB7FD5B0055EACB /* XCLocalSwiftPackageReference "core" */;
+			productName = core;
+		};
+		41CEE95E2EBFDB1400EA64EA /* core */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 41A9AFFF2EB7FD5B0055EACB /* XCLocalSwiftPackageReference "core" */;
 			productName = core;
