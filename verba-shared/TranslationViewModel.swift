@@ -22,10 +22,11 @@ final class TranslationViewModel: ObservableObject {
     private var lastUsedMode: TranslationMode?
     private var lastUsedQuality: TranslationQuality?
     private var lastUsedProvider: TranslationProvider?
+    private var lastUsedIPA: Bool?
 
     private let translateUseCase: any TranslateUseCase
     private let getProvidersUseCase: any GetProvidersUseCase
-    private let userDefaults: UserDefaults
+    // private let userDefaults: UserDefaults
     private static let fromLanguageKey = "translation.fromLanguage"
     private static let toLanguageKey = "translation.toLanguage"
     private static let modeKey = "translation.mode"
@@ -34,10 +35,10 @@ final class TranslationViewModel: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
 
-    init(translateUseCase: TranslateUseCase, getProviderUseCase: GetProvidersUseCase, userDefaults: UserDefaults = .standard) {
+    init(translateUseCase: TranslateUseCase, getProviderUseCase: GetProvidersUseCase) {
         self.translateUseCase = translateUseCase
         getProvidersUseCase = getProviderUseCase
-        self.userDefaults = userDefaults
+        let userDefaults = UserDefaults.standard
 
         // Load persisted languages if available
         if let savedFrom = userDefaults.string(forKey: Self.fromLanguageKey), !savedFrom.isEmpty {
@@ -60,37 +61,37 @@ final class TranslationViewModel: ObservableObject {
         // Persist changes automatically
         $fromLanguage
             .dropFirst()
-            .sink { [weak self] value in
-                self?.userDefaults.set(value, forKey: Self.fromLanguageKey)
+            .sink { value in
+                userDefaults.set(value, forKey: Self.fromLanguageKey)
             }
             .store(in: &cancellables)
 
         $toLanguage
             .dropFirst()
-            .sink { [weak self] value in
-                self?.userDefaults.set(value, forKey: Self.toLanguageKey)
+            .sink { value in
+                userDefaults.set(value, forKey: Self.toLanguageKey)
             }
             .store(in: &cancellables)
 
         $mode
             .dropFirst()
-            .sink { [weak self] value in
-                self?.userDefaults.set(value.rawValue, forKey: Self.modeKey)
+            .sink { value in
+                userDefaults.set(value.rawValue, forKey: Self.modeKey)
             }
             .store(in: &cancellables)
 
         $quality
             .dropFirst()
-            .sink { [weak self] value in
-                self?.userDefaults.set(value.rawValue, forKey: Self.qualityKey)
+            .sink { value in
+                userDefaults.set(value.rawValue, forKey: Self.qualityKey)
             }
             .store(in: &cancellables)
 
         $provider
             .dropFirst()
-            .sink { [weak self] value in
+            .sink { value in
                 if let value = value {
-                    self?.userDefaults.set(value.id, forKey: Self.providerKey)
+                    userDefaults.set(value.id, forKey: Self.providerKey)
                 }
             }.store(in: &cancellables)
 
@@ -133,13 +134,16 @@ final class TranslationViewModel: ObservableObject {
         isTranslating = true
         errorMessage = nil
 
+        let ipa = UserDefaults.standard.bool(forKey: requestIpaKey)
+
         let requestParsed = TranslationRequest.create(
             sourceText: text,
             sourceLang: fromLanguage,
             targetLang: toLanguage,
             mode: mode,
             provider: translateProvider,
-            quality: quality
+            quality: quality,
+            ipa: ipa,
         )
 
         switch requestParsed {
@@ -193,7 +197,7 @@ final class TranslationViewModel: ObservableObject {
         case let .success(providers):
             logger.debug("got providers success \(providers.count)")
             self.providers = providers
-            if let savedProviderId = userDefaults.string(forKey: Self.providerKey) {
+                if let savedProviderId = UserDefaults.standard.string(forKey: Self.providerKey) {
                 if let found = providers.first(where: { $0.id == savedProviderId }) {
                     provider = found
                 }

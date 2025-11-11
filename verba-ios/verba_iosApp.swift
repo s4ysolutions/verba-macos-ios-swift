@@ -7,8 +7,9 @@ struct verba_iosApp: App {
 
     // Create a shared service that conforms to both TranslateUseCase and GetProvidersUseCase
     private let translationService = TranslationService(translationRepository: TranslationRestRepository())
-    @AppStorage("menu.check.autoCopy") private var autoCopy: Bool = true
-    @AppStorage("menu.check.autoPaste") private var autoPaste: Bool = true
+    @AppStorage(autoCopyKey) private var autoCopy: Bool = true
+    @AppStorage(autoPasteKey) private var autoPaste: Bool = true
+    @AppStorage(requestIpaKey) private var requestIpa: Bool = true
 
     var body: some Scene {
         WindowGroup {
@@ -24,8 +25,8 @@ struct verba_iosApp: App {
                         Menu {
                             // Auto-copy toggle
                             Button(action: {
-                                let newValue = !(UserDefaults.standard.bool(forKey: "menu.check.autoCopy"))
-                                UserDefaults.standard.set(newValue, forKey: "menu.check.autoCopy")
+                                let newValue = !(UserDefaults.standard.bool(forKey: autoCopyKey))
+                                UserDefaults.standard.set(newValue, forKey: autoCopyKey)
                             }) {
                                 Label(
                                     NSLocalizedString(
@@ -39,8 +40,8 @@ struct verba_iosApp: App {
 
                             // Auto-paste toggle
                             Button(action: {
-                                let newValue = !(UserDefaults.standard.bool(forKey: "menu.check.autoPaste"))
-                                UserDefaults.standard.set(newValue, forKey: "menu.check.autoPaste")
+                                let newValue = !(UserDefaults.standard.bool(forKey: autoPasteKey))
+                                UserDefaults.standard.set(newValue, forKey: autoPasteKey)
                             }) {
                                 Label(
                                     NSLocalizedString(
@@ -51,6 +52,22 @@ struct verba_iosApp: App {
                                     systemImage: autoPaste ? "checkmark.square" : "square"
                                 )
                             }
+
+                            // Request IPA toggle
+                            Button(action: {
+                                let newValue = !(UserDefaults.standard.bool(forKey: requestIpaKey))
+                                UserDefaults.standard.set(newValue, forKey: requestIpaKey)
+                            }) {
+                                Label(
+                                    NSLocalizedString(
+                                        "menu.requestIPA",
+                                        value: "Show Transcription",
+                                        comment: "Request IPA transcription with the translation"
+                                    ),
+                                    systemImage: requestIpa ? "checkmark.square" : "square"
+                                )
+                            }
+
                             Divider()
 
                             Button(NSLocalizedString("menu.about", value: "About & Privacy", comment: "")) {
@@ -62,15 +79,6 @@ struct verba_iosApp: App {
                         }
                         .menuStyle(BorderlessButtonMenuStyle())
                         .menuIndicator(.hidden)
-                        .onAppear {
-                            let defaults = UserDefaults.standard
-                            if defaults.object(forKey: "menu.check.autoCopy") == nil {
-                                defaults.set(true, forKey: "menu.check.autoCopy")
-                            }
-                            if defaults.object(forKey: "menu.check.autoPaste") == nil {
-                                defaults.set(true, forKey: "menu.check.autoPaste")
-                            }
-                        }
                     }
                 }
                 .sheet(isPresented: $showAbout) {

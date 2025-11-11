@@ -10,6 +10,15 @@ struct verba_masosApp: App {
 
     init() {
         appDelegate.translationService = translationService
+        UserDefaults.standard.register(defaults: [
+            autoCopyKey: true
+        ])
+        UserDefaults.standard.register(defaults: [
+            autoPasteKey: true
+        ])
+        UserDefaults.standard.register(defaults: [
+            requestIpaKey: true
+        ])
     }
 
     // MARK: - Scene Builders

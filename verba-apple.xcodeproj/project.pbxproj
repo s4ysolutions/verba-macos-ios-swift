@@ -58,6 +58,7 @@
 			membershipExceptions = (
 				"/Localized: Localizable.strings",
 				TranslationViewModel.swift,
+				userDefaults.swift,
 			);
 			target = 41A35C492EB7D97C009B2ED9 /* verba-ios */;
 		};

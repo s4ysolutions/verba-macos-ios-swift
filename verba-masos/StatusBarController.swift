@@ -10,8 +10,6 @@ final class StatusBarController {
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "verba-masos", category: "StatusBar")
 
     // UserDefaults keys
-    private static let autoCopyKey = "menu.check.autoCopy"
-    private static let autoPasteKey = "menu.check.autoPaste"
 
     private let statusItem: NSStatusItem
     private let menu: NSMenu
@@ -51,36 +49,36 @@ final class StatusBarController {
         showItem.target = self
         menu.addItem(showItem)
          */
-        let quitTitle = NSLocalizedString("menu.quit", value: "Quit", comment: "Quit application")
 
 
         // Ensure defaults exist and are true by default
         let defaults = UserDefaults.standard
-        if defaults.object(forKey: Self.autoCopyKey) == nil {
-            defaults.set(true, forKey: Self.autoCopyKey)
-        }
-        if defaults.object(forKey: Self.autoPasteKey) == nil {
-            defaults.set(true, forKey: Self.autoPasteKey)
-        }
 
         // Checkable preferences
         let autoCopyTitle = NSLocalizedString("menu.check.autoCopy", value: "Monitor Clipboard", comment: "Toggle monitoring clipboard")
-        let autoPasteTitle = NSLocalizedString("menu.check.autoPaste", value: "Auto-Paste Translation", comment: "Toggle auto pasting translation to clipboard")
-
         let autoCopyItem = NSMenuItem(title: autoCopyTitle, action: #selector(toggleAutoCopy(_:)), keyEquivalent: "")
         autoCopyItem.target = self
-        autoCopyItem.state = defaults.bool(forKey: Self.autoCopyKey) ? .on : .off
+        autoCopyItem.state = defaults.bool(forKey: autoCopyKey) ? .on : .off
         autoCopyItem.onStateImage = NSImage(named: NSImage.menuOnStateTemplateName)
         menu.addItem(autoCopyItem)
 
+        let autoPasteTitle = NSLocalizedString("menu.check.autoPaste", value: "Auto-Paste Translation", comment: "Toggle auto pasting translation to clipboard")
         let autoPasteItem = NSMenuItem(title: autoPasteTitle, action: #selector(toggleAutoPaste(_:)), keyEquivalent: "")
         autoPasteItem.target = self
-        autoPasteItem.state = defaults.bool(forKey: Self.autoPasteKey) ? .on : .off
+        autoPasteItem.state = defaults.bool(forKey: autoPasteKey) ? .on : .off
         autoPasteItem.onStateImage = NSImage(named: NSImage.menuOnStateTemplateName)
         menu.addItem(autoPasteItem)
 
+        let requestIPATitle = NSLocalizedString("menu.requestIPA", value: "Show Transcription", comment: "Request IPA transcription with the translation")
+        let requestIpaItem = NSMenuItem(title: requestIPATitle, action: #selector(toggleRequestIpa(_:)), keyEquivalent: "")
+        requestIpaItem.state = defaults.bool(forKey: requestIpaKey) ? .on : .off
+        requestIpaItem.onStateImage = NSImage(named: NSImage.menuOnStateTemplateName)
+        requestIpaItem.target = self
+        menu.addItem(requestIpaItem)
+
         menu.addItem(NSMenuItem.separator())
 
+        let quitTitle = NSLocalizedString("menu.quit", value: "Quit", comment: "Quit application")
         let quitItem = NSMenuItem(title: quitTitle, action: #selector(didTapQuit), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
@@ -124,13 +122,19 @@ final class StatusBarController {
     @objc private func toggleAutoCopy(_ sender: NSMenuItem) {
         sender.state = (sender.state == .on) ? .off : .on
         let newValue = (sender.state == .on)
-        UserDefaults.standard.set(newValue, forKey: Self.autoCopyKey)
+        UserDefaults.standard.set(newValue, forKey: autoCopyKey)
     }
 
     @objc private func toggleAutoPaste(_ sender: NSMenuItem) {
         sender.state = (sender.state == .on) ? .off : .on
         let newValue = (sender.state == .on)
-        UserDefaults.standard.set(newValue, forKey: Self.autoPasteKey)
+        UserDefaults.standard.set(newValue, forKey: autoPasteKey)
+    }
+
+    @objc private func toggleRequestIpa(_ sender: NSMenuItem) {
+        sender.state = (sender.state == .on) ? .off : .on
+        let newValue = (sender.state == .on)
+        UserDefaults.standard.set(newValue, forKey: requestIpaKey)
     }
 
     @objc private func didTapShow() {

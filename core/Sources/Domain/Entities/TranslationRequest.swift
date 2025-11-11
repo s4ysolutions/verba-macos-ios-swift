@@ -5,6 +5,7 @@ public struct TranslationRequest: Sendable {
     public let mode: TranslationMode
     public let provider: TranslationProvider
     public let quality: TranslationQuality
+    public let ipa: Bool
 
     private init(
         sourceText: String,
@@ -12,7 +13,8 @@ public struct TranslationRequest: Sendable {
         targetLang: String,
         mode: TranslationMode,
         provider: TranslationProvider,
-        quality: TranslationQuality
+        quality: TranslationQuality,
+        ipa: Bool,
     ) {
         self.sourceText = sourceText
         self.sourceLang = sourceLang
@@ -20,6 +22,7 @@ public struct TranslationRequest: Sendable {
         self.mode = mode
         self.provider = provider
         self.quality = quality
+        self.ipa = ipa
     }
 
     public static func create(
@@ -28,7 +31,8 @@ public struct TranslationRequest: Sendable {
         targetLang: String,
         mode: TranslationMode = .Auto,
         provider: TranslationProvider,
-        quality: TranslationQuality = .Optimal
+        quality: TranslationQuality = .Optimal,
+        ipa: Bool
     ) -> Result<TranslationRequest, TranslationError> {
         // Validate sourceText
         let trimmedText = sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -36,13 +40,13 @@ public struct TranslationRequest: Sendable {
             return .failure(.validation(.emptyString))
         }
 
-        guard sourceLang.count <= 12 else {
+        guard sourceLang.count <= 16 else {
             return .failure(.validation(.langTooLong(sourceLang)))
         }
         guard sourceLang.count > 2 else {
             return .failure(.validation(.langTooShort(sourceLang)))
         }
-        guard targetLang.count <= 12 else {
+        guard targetLang.count <= 16 else {
             return .failure(.validation(.langTooLong(targetLang)))
         }
         guard targetLang.count > 2 else {
@@ -63,7 +67,8 @@ public struct TranslationRequest: Sendable {
             targetLang: targetLang,
             mode: mode,
             provider: provider,
-            quality: quality
+            quality: quality,
+            ipa: ipa
         )
         return .success(request)
 

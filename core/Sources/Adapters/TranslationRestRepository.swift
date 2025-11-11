@@ -4,7 +4,7 @@ import OSLog
 
 public struct TranslationRestRepository: TranslationRepository {
     private static let baseURL = "https://verba.s4y.solutions"
-    // static let url = URL(string: "http://localhost:4000/translation")!
+    //private static let baseURL = "http://localhost:4000"
     private static let translationUrl = URL(string: "\(baseURL)/translation")!
     private static let providersUrl = URL(string: "\(baseURL)/providers")!
     private let secret: String
@@ -89,6 +89,7 @@ public struct TranslationRestRepository: TranslationRepository {
             "mode": modeString,
             "provider": providerString,
             "quality": qualityString,
+            "ipa": translationRequest.ipa,
         ]
 
         do {
