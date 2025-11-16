@@ -9,7 +9,8 @@ import os
 import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
-    var translationService: TranslationService<TranslationRestRepository>?
+    var translateUseCase: TranslateUseCase?
+    var getProvidersUseCase: GetProvidersUseCase? // TranslationService<TranslationRestRepository>?
 
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "verba-masos", category: "AppDelegate")
     private var doubleCmdCDetector: GlobalDoubleCmdCDetector?
@@ -33,8 +34,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         doubleCmdCDetector = GlobalDoubleCmdCDetector {
             Self.logger.debug("Double Cmd+C detected!")
-            self.selectionCapture.captureSelection { [weak self] text in
-                guard let self = self, let text = text else {
+            self.selectionCapture.captureSelection { [weak self] _ in
+                guard let self = self else {
                     Self.logger.warning("No text captured")
                     return
                 }
@@ -92,8 +93,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
             Self.logger.debug("Creating new window")
             let hosting = NSHostingController(rootView: ContentView(
-                translateUseCase: self.translationService!,
-                getProvidersUseCase: self.translationService!
+                translateUseCase: self.translateUseCase!,
+                getProvidersUseCase: self.getProvidersUseCase!
             ))
             let window = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),

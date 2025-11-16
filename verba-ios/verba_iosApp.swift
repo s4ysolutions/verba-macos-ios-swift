@@ -86,6 +86,9 @@ struct verba_iosApp: App {
                 }
             }
             .navigationViewStyle(StackNavigationViewStyle())
+            .task {
+                _ = await translationService.providers()
+            }
         }
     }
 }

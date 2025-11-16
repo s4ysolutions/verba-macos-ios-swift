@@ -9,16 +9,21 @@ struct verba_masosApp: App {
     }
 
     init() {
-        appDelegate.translationService = translationService
+        let translationService = TranslationService(translationRepository: TranslationRestRepository())
+        appDelegate.translateUseCase = translationService
+        appDelegate.getProvidersUseCase = translationService
         UserDefaults.standard.register(defaults: [
-            autoCopyKey: true
+            autoCopyKey: true,
         ])
         UserDefaults.standard.register(defaults: [
-            autoPasteKey: true
+            autoPasteKey: true,
         ])
         UserDefaults.standard.register(defaults: [
-            requestIpaKey: true
+            requestIpaKey: true,
         ])
+        Task{
+            await translationService.providers()
+        }
     }
 
     // MARK: - Scene Builders
@@ -55,6 +60,4 @@ struct verba_masosApp: App {
             return legacyScene
         }
     }
-
-    private let translationService = TranslationService(translationRepository: TranslationRestRepository())
 }

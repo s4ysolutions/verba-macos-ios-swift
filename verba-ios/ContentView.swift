@@ -39,9 +39,9 @@ struct ContentView: View {
             } else {
                 VStack {
                     VStack {
-                        TranslatingText(text: $viewModel.translatingText,focused: $focused)
-                            // .focused($focused)
-                            //.frame(maxWidth: .infinity, alignment: .leading)
+                        TranslatingText(text: $viewModel.translatingText, focused: $focused)
+                        // .focused($focused)
+                        // .frame(maxWidth: .infinity, alignment: .leading)
                         HStack {
                             Spacer()
                             if !viewModel.isTranslating {
@@ -88,8 +88,8 @@ struct ContentView: View {
                                     .frame(maxWidth: .infinity, alignment: .center)
                             } else {
                                 TranslatedText(text: $viewModel.translatedText)
-                                //editableText($viewModel.translatedText)
-                                 //   .frame(maxWidth: .infinity, alignment: .leading)
+                                // editableText($viewModel.translatedText)
+                                //   .frame(maxWidth: .infinity, alignment: .leading)
                             }}
                             .frame(maxHeight: .infinity)
                             .layoutPriority(1)
@@ -114,6 +114,7 @@ struct ContentView: View {
             }
         }
         .background(Color(UIColor.systemBackground))
+        .padding([.bottom, .leading, .trailing])
         .onAppear {
             logger.debug("View: onAppear")
             updateClipboardText()
@@ -192,9 +193,9 @@ struct ContentView: View {
 
             // Quality selector
             Picker("", selection: $viewModel.quality) {
-                Text(qualityLabel(.Fast)).tag(TranslationQuality.Fast)
-                Text(qualityLabel(.Optimal)).tag(TranslationQuality.Optimal)
-                Text(qualityLabel(.Thinking)).tag(TranslationQuality.Thinking)
+                ForEach(viewModel.qualities) { quality in
+                    Text(quality.displayName).tag(Optional(quality))
+                }
             }
             .pickerStyle(.menu)
 
@@ -208,13 +209,13 @@ struct ContentView: View {
     }
 
     /*
-    @ViewBuilder
-    private func editableText(_ text: Binding<String>) -> some View {
-        TextEditor(text: text)
-            .textSelection(.enabled)
-            .font(.body)
-    }
-     */
+     @ViewBuilder
+     private func editableText(_ text: Binding<String>) -> some View {
+         TextEditor(text: text)
+             .textSelection(.enabled)
+             .font(.body)
+     }
+      */
 
     // Provide user-facing labels for modes
     private func modeLabel(_ mode: TranslationMode) -> String {

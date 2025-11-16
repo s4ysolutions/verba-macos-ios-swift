@@ -2,6 +2,27 @@ import CryptoKit
 import Foundation
 import OSLog
 
+private struct QualityDTO: Codable {
+    let value: String
+}
+
+private struct ProviderDTO: Codable {
+    let name: String
+    let qualities: [QualityDTO]
+}
+
+private struct StateDTO: Codable {
+    let providers: [ProviderDTO]
+}
+
+private struct TranslationResponseDTO: Codable {
+    let translated: String
+    let inputTokenCount: Int
+    let outputTokenCount: Int
+    let time: Int // milliseconds
+    let state: StateDTO
+}
+
 public struct TranslationRestRepository: TranslationRepository {
     private static let baseURL = "https://verba.s4y.solutions"
     // private static let baseURL = "http://localhost:4000"
@@ -24,16 +45,27 @@ public struct TranslationRestRepository: TranslationRepository {
         request.setValue(wsseHeader, forHTTPHeaderField: "Authorization")
 
         return await executeRequest(request) { data in
-            if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String] {
-                let providers = json.map { TranslationProvider(id: $0, displayName: $0, qualities: []) }
+            do {
+                let dtos = try JSONDecoder().decode([ProviderDTO].self, from: data)
+                let providers = dtos.map { dto in
+                    TranslationProvider(
+                        id: dto.name,
+                        displayName: dto.name,
+                        qualities: dto.qualities.compactMap { TranslationQuality(rawValue: $0.value) }
+                    )
+                }
                 return .success(providers)
+            } catch {
+                let string = String(data: data, encoding: .utf8) ?? "<binary data>"
+                logger.error("Get providers expected JSON array in response, got: \(string)\n\(error)")
+                return
+                    .failure(
+                        .decodingFailed(NSLocalizedString("msg.get-providers", comment: ""), data, error.localizedDescription))
             }
-            logger.error("Get providers expected JSON array in response, got: \(data)")
-            return .failure(.decodingFailed(String(format: NSLocalizedString("error.api.decoding.not-array", comment: ""), "\(data)"), nil))
         }
     }
 
-    public func translate(from translationRequest: TranslationRequest) async -> Result<String, ApiError> {
+    public func translate(from translationRequest: TranslationRequest) async -> Result<TranslationResponse, ApiError> {
         // Build request
         var request = URLRequest(url: Self.translationUrl)
         request.httpMethod = "POST"
@@ -80,27 +112,32 @@ public struct TranslationRestRepository: TranslationRepository {
             return .failure(.encodingFailed(NSLocalizedString("error.api.encoding.json", comment: "Error while encoding translation requst as JSON"), error))
         }
         return await executeRequest(request) { data in
-            if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-               let translated = json["translated"] as? String {
-                return .success(translated)
-            }
+            do {
+                let dto = try JSONDecoder().decode(TranslationResponseDTO.self, from: data)
 
-            // Try to decode as top-level JSON string
-            if let topLevelString = try? JSONDecoder().decode(String.self, from: data) {
-                return .success(topLevelString)
-            }
+                let providers = dto.state.providers.map { providerDTO in
+                    TranslationProvider(
+                        id: providerDTO.name,
+                        displayName: providerDTO.name,
+                        qualities: providerDTO.qualities.compactMap {
+                            TranslationQuality(rawValue: $0.value)
+                        }
+                    )
+                }
 
-            // Fallback to plain text
-            if let text = String(data: data, encoding: .utf8), !text.isEmpty {
-                return .success(text)
-            } else {
-                logger.warning("Failed to decode translation response: empty response")
-                // TODO: improve error
-                return .failure(.decodingFailed(
-                    NSLocalizedString(
-                        "error.api.decoding.empty",
-                        comment: "Failed to decode translation response: empty response"),
-                    nil))
+                return .success(TranslationResponse(
+                    translated: dto.translated,
+                    inputTokenCount: dto.inputTokenCount,
+                    outputTokenCount: dto.outputTokenCount,
+                    timeMs: dto.time,
+                    providers: providers
+                ))
+            } catch {
+                let string = String(data: data, encoding: .utf8) ?? "<binary data>"
+                logger.error("Failed to decode translation response, got \(string):\n\(error)")
+                return
+                    .failure(
+                        .decodingFailed(NSLocalizedString("msg.translate", comment: ""), data, error.localizedDescription))
             }
         }
     }

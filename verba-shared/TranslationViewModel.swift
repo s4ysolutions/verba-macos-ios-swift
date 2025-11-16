@@ -12,7 +12,8 @@ final class TranslationViewModel: ObservableObject {
     @Published var fromLanguage: String = ""
     @Published var toLanguage: String = Locale.current.localizedString(forLanguageCode: Locale.current.languageCode ?? "") ?? ""
     @Published var mode: TranslationMode = .Auto
-    @Published var quality: TranslationQuality = .Optimal
+    @Published var quality: TranslationQuality? = nil // .Optimal
+    @Published var qualities: [TranslationQuality] = []
     @Published var provider: TranslationProvider? = nil
     @Published var providers: [TranslationProvider] = []
     @Published var isLoading = true
@@ -55,10 +56,12 @@ final class TranslationViewModel: ObservableObject {
             mode = savedMode
         }
 
-        if let rawQuality = userDefaults.string(forKey: Self.qualityKey),
-           let savedQuality = TranslationQuality(rawValue: rawQuality) {
-            quality = savedQuality
-        }
+        /* will be set when providers loaded
+         if let rawQuality = userDefaults.string(forKey: Self.qualityKey),
+            let savedQuality = TranslationQuality(rawValue: rawQuality) {
+             quality = savedQuality
+         }
+          */
 
         // Persist changes automatically
         $fromLanguage
@@ -85,7 +88,9 @@ final class TranslationViewModel: ObservableObject {
         $quality
             .dropFirst()
             .sink { value in
-                userDefaults.set(value.rawValue, forKey: Self.qualityKey)
+                if let v = value {
+                    userDefaults.set(v.rawValue, forKey: Self.qualityKey)
+                }
             }
             .store(in: &cancellables)
 
@@ -95,6 +100,7 @@ final class TranslationViewModel: ObservableObject {
                 if let value = value {
                     userDefaults.set(value.id, forKey: Self.providerKey)
                 }
+                self.syncQualities(value)
             }.store(in: &cancellables)
 
         Task {
@@ -142,17 +148,27 @@ final class TranslationViewModel: ObservableObject {
     }
 
     private func performTranslation() async {
-        await updateProviders()
+        errorMessage = nil
+        guard !isLoading else {
+            logger.debug("App is loading, no translating possible")
+            return
+        }
 
         guard let translateProvider = provider else {
+            errorMessage = NSLocalizedString("error.ui.no-provider", comment: "")
             logger.debug("No provider set")
             // TODO: error
             return
         }
 
+        guard let translateQuality = quality else {
+            errorMessage = NSLocalizedString("error.ui.no-quality", comment: "")
+            logger.debug("No quality set")
+            return
+        }
+
         isTranslating = true
         logger.debug("View model clear error")
-        errorMessage = nil
 
         let ipa = UserDefaults.standard.bool(forKey: requestIpaKey)
 
@@ -162,7 +178,7 @@ final class TranslationViewModel: ObservableObject {
             targetLang: toLanguage,
             mode: mode,
             provider: translateProvider,
-            quality: quality,
+            quality: translateQuality,
             ipa: ipa,
         )
 
@@ -185,14 +201,15 @@ final class TranslationViewModel: ObservableObject {
             }
 
             switch result {
-            case let .success(text):
-                translatedText = text
-                lastTranslatedText = text
+            case let .success(response):
+                translatedText = response.translated
+                lastTranslatedText = response.translated
                 lastUsedMode = mode
                 lastUsedQuality = quality
                 lastUsedProvider = provider
+                setProviders(response.providers)
                 if UserDefaults.standard.object(forKey: "menu.check.autoPaste") as? Bool ?? true {
-                    copyToClipboard(text)
+                    copyToClipboard(response.translated)
                     logger.debug("Pasted translation to clipboard")
                 }
             case let .failure(error):
@@ -230,20 +247,59 @@ final class TranslationViewModel: ObservableObject {
         switch result {
         case let .success(providers):
             logger.debug("got providers success \(providers.count)")
-            self.providers = providers
-            if let savedProviderId = UserDefaults.standard.string(forKey: Self.providerKey) {
-                if let found = providers.first(where: { $0.id == savedProviderId }) {
-                    provider = found
-                }
-            }
-            if provider == nil {
-                provider = providers.first!
-            }
+            setProviders(providers)
         case let .failure(error):
             // TODO: word
             logger.debug("View model set error: \(error.localizedDescription)")
-            errorMessage = "Failed to load providers: \(error)"
+            errorMessage = error.localizedDescription
         }
+    }
+
+    private func setProviders(_ providers: [TranslationProvider]) {
+        self.providers = providers
+        logger.debug("setProviders: \(self.providers)")
+
+        // Early return if no providers
+        guard !providers.isEmpty else {
+            provider = nil
+            return
+        }
+
+        // Set provider (from saved preference or first available)
+        let nextProvider = restoreSavedProvider(from: providers) ?? providers.first
+        logger.debug("setProviders, selected: \(String(describing: nextProvider?.id))")
+        // subscription tiggerers sync of qualities
+        provider = nextProvider
+    }
+
+    private func restoreSavedProvider(from providers: [TranslationProvider]) -> TranslationProvider? {
+        guard let savedProviderId = UserDefaults.standard.string(forKey: Self.providerKey) else {
+            return nil
+        }
+        return providers.first(where: { $0.id == savedProviderId }) ?? providers.first
+    }
+
+    private func syncQualities(_ provider: TranslationProvider?) {
+        guard let provider else {
+            qualities = []
+            quality = nil
+            return
+        }
+        qualities = provider.qualities
+        logger.debug("syncQualities with provider \(provider): \(self.qualities)")
+        guard !qualities.isEmpty else {
+            quality = nil
+            return
+        }
+        quality = restoreSavedQuality(from: qualities)
+    }
+
+    private func restoreSavedQuality(from qualities: [TranslationQuality]) -> TranslationQuality? {
+        guard let rawQuality = UserDefaults.standard.string(forKey: Self.qualityKey),
+              let savedQuality = TranslationQuality(rawValue: rawQuality) else {
+            return nil
+        }
+        return qualities.first(where: { $0.id == savedQuality.id }) ?? qualities.first
     }
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "verba-masos", category: "TranslationViewModel")

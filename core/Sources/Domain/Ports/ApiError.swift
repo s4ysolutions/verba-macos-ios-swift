@@ -5,7 +5,8 @@ public enum ApiError: Error, LocalizedError {
     case rateLimitExceeded
     case requestTooBig
     case encodingFailed(String, Error)
-    case decodingFailed(String, Error?)
+    // location, data, error message
+    case decodingFailed(String, Data, String)
     case http(Int, String?)
     case networking(Error)
     case unexpected(String)
@@ -20,12 +21,9 @@ public enum ApiError: Error, LocalizedError {
             return NSLocalizedString("error.api.request-too-big", comment: "Request to translate too big")
         case let .encodingFailed(data, error):
             return "Failed to encode data: \(data). Error: \(error.localizedDescription)"
-        case let .decodingFailed(data, error):
-            if let nsError = error as NSError? {
-                return "Failed to decode data: \(data). Error: \(nsError.localizedDescription)"
-            } else {
-                return "Failed to decode data: \(data)"
-            }
+        case let .decodingFailed(location, data, error):
+            let string = String(data: data, encoding: .utf8) ?? "<binary data>"
+            return String(format: NSLocalizedString("error.api.decoding", comment: ""), location, error, string) ?? NSLocalizedString("error.api.decoding-default", comment: "")
         case let .http(code, message):
             return Self.extractHttpErrorMessage(code, message)
         case let .networking(error):
