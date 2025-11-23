@@ -25,7 +25,7 @@ private struct TranslationResponseDTO: Codable {
 
 public struct TranslationRestRepository: TranslationRepository {
     private static let baseURL = "https://verba.s4y.solutions"
-    // private static let baseURL = "http://localhost:4000"
+    //private static let baseURL = "http://localhost:4000"
     private static let translationUrl = URL(string: "\(baseURL)/translation")!
     private static let providersUrl = URL(string: "\(baseURL)/providers")!
     private let secret: String
@@ -65,7 +65,7 @@ public struct TranslationRestRepository: TranslationRepository {
         }
     }
 
-    public func translate(from translationRequest: TranslationRequest) async -> Result<TranslationResponse, ApiError> {
+    public func translate(from translationRequest: TranslationRequest, byUser: User) async -> Result<TranslationResponse, ApiError> {
         // Build request
         var request = URLRequest(url: Self.translationUrl)
         request.httpMethod = "POST"
@@ -103,6 +103,7 @@ public struct TranslationRestRepository: TranslationRepository {
             "provider": providerString,
             "quality": qualityString,
             "ipa": translationRequest.ipa,
+            "userId": byUser.id,
         ]
 
         do {

@@ -2,23 +2,28 @@ import OSLog
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "verba-masos", category: "TranslationService")
 
-public actor TranslationService<TR: TranslationRepository>:
+public actor TranslationService:
     TranslateUseCase, GetProvidersUseCase {
-    private let translationRespository: TR
+    private let translationRepository: TranslationRepository
+    private let userRepository: UserRepository
 
     private var cachedProviders: [TranslationProvider]?
     private var fetchTask: Task<Result<[TranslationProvider], ApiError>, Never>?
 
-    public init(translationRepository: TR) {
-        translationRespository = translationRepository
+    public init(translationRepository: TranslationRepository, userRepository: UserRepository) {
+        self.translationRepository = translationRepository
+        self.userRepository = userRepository
     }
 
     public func translate(from translationRequest: TranslationRequest) async
         -> Result<TranslationResponse, TranslationError> {
+        let meResult = await userRepository.me()
+        guard case let .success(me) = meResult else {
+            fatalError("User not logged in")
+        }
         logger.debug("request: \(translationRequest.sourceText)")
-        let response = await translationRespository.translate(from: translationRequest)
-        return response
-            .mapError { .api($0) }
+        let response = await translationRepository.translate(from: translationRequest, byUser: me)
+        return response.mapError { .api($0) }
     }
 
     public func providers() async
@@ -34,7 +39,7 @@ public actor TranslationService<TR: TranslationRepository>:
         }
 
         let task = Task<Result<[TranslationProvider], ApiError>, Never> {
-            let result = await translationRespository.providers()
+            let result = await translationRepository.providers()
             if case let .success(providers) = result {
                 logger.debug("Fetched providers successfully and cached them")
                 self.cachedProviders = providers

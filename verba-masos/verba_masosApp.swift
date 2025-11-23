@@ -9,7 +9,9 @@ struct verba_masosApp: App {
     }
 
     init() {
-        let translationService = TranslationService(translationRepository: TranslationRestRepository())
+        let translationService = TranslationService(
+            translationRepository: TranslationRestRepository(),
+            userRepository: UserDeviceRepository())
         appDelegate.translateUseCase = translationService
         appDelegate.getProvidersUseCase = translationService
         UserDefaults.standard.register(defaults: [
@@ -21,7 +23,7 @@ struct verba_masosApp: App {
         UserDefaults.standard.register(defaults: [
             requestIpaKey: true,
         ])
-        Task{
+        Task {
             await translationService.providers()
         }
     }

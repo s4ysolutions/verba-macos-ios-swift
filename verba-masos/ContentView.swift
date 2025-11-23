@@ -239,7 +239,13 @@ struct ContentView: View {
 
 #Preview {
     ContentView(
-        translateUseCase: TranslationService(translationRepository: TranslationRestRepository()),
-        getProvidersUseCase: TranslationService(translationRepository: TranslationRestRepository())
+        translateUseCase: TranslationService(
+            translationRepository: TranslationRestRepository(),
+            userRepository: UserDeviceRepository()
+        ),
+        getProvidersUseCase: TranslationService(
+            translationRepository: TranslationRestRepository(),
+            userRepository: UserDeviceRepository()
+        )
     )
 }
