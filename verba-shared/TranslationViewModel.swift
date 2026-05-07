@@ -20,6 +20,8 @@ final class TranslationViewModel: ObservableObject {
     @Published var loadingError: String? = nil
 
     private var currentTranslationTask: Task<Void, Never>?
+    private var pendingTranslationRequest: (text: String, force: Bool)?
+    private var translationGeneration: Int = 0
 
     private var lastTranslatedText: String = "" // non-edited translated text
     private var lastUsedMode: TranslationMode?
@@ -106,6 +108,7 @@ final class TranslationViewModel: ObservableObject {
         Task {
             await updateProviders()
             isLoading = false
+            triggerPendingTranslationIfPossible()
         }
     }
 
@@ -134,11 +137,17 @@ final class TranslationViewModel: ObservableObject {
         }
 
         cancelTranslation()
-
         translatingText = text
-        currentTranslationTask = Task {
-            await performTranslation()
+
+        // On first launch provider/quality can still be syncing.
+        // Keep UI state and run automatically as soon as prerequisites are ready.
+        if isLoading || provider == nil || quality == nil {
+            pendingTranslationRequest = (text: text, force: force)
+            isTranslating = true
+            return
         }
+
+        startTranslationTask()
     }
 
     func cancelTranslation() {
@@ -147,10 +156,13 @@ final class TranslationViewModel: ObservableObject {
         isTranslating = false
     }
 
-    private func performTranslation() async {
+    private func performTranslation(generation: Int) async {
         errorMessage = nil
         guard !isLoading else {
             logger.debug("App is loading, no translating possible")
+            if generation == translationGeneration {
+                isTranslating = false
+            }
             return
         }
 
@@ -158,16 +170,20 @@ final class TranslationViewModel: ObservableObject {
             errorMessage = NSLocalizedString("error.ui.no-provider", comment: "")
             logger.debug("No provider set")
             // TODO: error
+            if generation == translationGeneration {
+                isTranslating = false
+            }
             return
         }
 
         guard let translateQuality = quality else {
             errorMessage = NSLocalizedString("error.ui.no-quality", comment: "")
             logger.debug("No quality set")
+            if generation == translationGeneration {
+                isTranslating = false
+            }
             return
         }
-
-        isTranslating = true
         logger.debug("View model clear error")
 
         let ipa = UserDefaults.standard.bool(forKey: requestIpaKey)
@@ -188,7 +204,9 @@ final class TranslationViewModel: ObservableObject {
 
             guard !Task.isCancelled else {
                 logger.debug("Translation cancelled before network call")
-                isTranslating = false
+                if generation == translationGeneration {
+                    isTranslating = false
+                }
                 return
             }
 
@@ -196,7 +214,9 @@ final class TranslationViewModel: ObservableObject {
 
             guard !Task.isCancelled else {
                 logger.debug("Translation cancelled after network call")
-                isTranslating = false
+                if generation == translationGeneration {
+                    isTranslating = false
+                }
                 return
             }
 
@@ -222,7 +242,9 @@ final class TranslationViewModel: ObservableObject {
             errorMessage = error.localizedDescription
         }
 
-        isTranslating = false
+        if generation == translationGeneration {
+            isTranslating = false
+        }
     }
 
     func copyToClipboard(_ text: String) {
@@ -283,15 +305,34 @@ final class TranslationViewModel: ObservableObject {
         guard let provider else {
             qualities = []
             quality = nil
+            triggerPendingTranslationIfPossible()
             return
         }
         qualities = provider.qualities
         logger.debug("syncQualities with provider \(provider): \(self.qualities)")
         guard !qualities.isEmpty else {
             quality = nil
+            triggerPendingTranslationIfPossible()
             return
         }
         quality = restoreSavedQuality(from: qualities)
+        triggerPendingTranslationIfPossible()
+    }
+
+    private func startTranslationTask() {
+        translationGeneration += 1
+        let generation = translationGeneration
+        isTranslating = true
+        currentTranslationTask = Task {
+            await performTranslation(generation: generation)
+        }
+    }
+
+    private func triggerPendingTranslationIfPossible() {
+        guard !isLoading, provider != nil, quality != nil else { return }
+        guard let pending = pendingTranslationRequest else { return }
+        pendingTranslationRequest = nil
+        translate(text: pending.text, force: pending.force)
     }
 
     private func restoreSavedQuality(from qualities: [TranslationQuality]) -> TranslationQuality? {
