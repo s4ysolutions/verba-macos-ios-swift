@@ -79,7 +79,7 @@ final class StatusBarController {
         menu.addItem(NSMenuItem.separator())
 
         let quitTitle = NSLocalizedString("menu.quit", value: "Quit", comment: "Quit application")
-        let quitItem = NSMenuItem(title: quitTitle, action: #selector(didTapQuit), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: quitTitle, action: #selector(didTapQuit), keyEquivalent: "")
         quitItem.target = self
         menu.addItem(quitItem)
     }

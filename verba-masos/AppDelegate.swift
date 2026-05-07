@@ -32,8 +32,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 // self?.showWindow()
                 self?.bringMainWindowToFront()
             },
-            onQuit: {
-                NSApp.terminate(nil)
+            onQuit: { [weak self] in
+                self?.terminateImmediately()
             }
         )
 
@@ -207,6 +207,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
 
         NSApp.hide(nil)
+    }
+
+    private func terminateImmediately() {
+        allowImmediateTermination = true
+        pendingQuitConfirmationWorkItem?.cancel()
+        pendingQuitConfirmationWorkItem = nil
+        NSApp.terminate(nil)
     }
 
     private func present(_ window: NSWindow) {
