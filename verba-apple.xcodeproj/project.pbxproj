@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		410C48912ED327100076D090 /* config.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 410C48902ED327100076D090 /* config.storekit */; };
+		410C48922ED327100076D090 /* config.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 410C48902ED327100076D090 /* config.storekit */; };
 		41A9B0022EB802EA0055EACB /* core in Frameworks */ = {isa = PBXBuildFile; productRef = 41A9B0012EB802EA0055EACB /* core */; };
 		41CEE95F2EBFDB1400EA64EA /* core in Frameworks */ = {isa = PBXBuildFile; productRef = 41CEE95E2EBFDB1400EA64EA /* core */; };
 /* End PBXBuildFile section */
@@ -43,6 +45,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		410C48902ED327100076D090 /* config.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = config.storekit; sourceTree = "<group>"; };
 		41A35C1E2EB7D94E009B2ED9 /* Verba.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Verba.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		41A35C2B2EB7D94F009B2ED9 /* verba-masosTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "verba-masosTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		41A35C352EB7D94F009B2ED9 /* verba-masosUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "verba-masosUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -189,6 +192,7 @@
 				41A9B0002EB802EA0055EACB /* Frameworks */,
 				41A35C1F2EB7D94E009B2ED9 /* Products */,
 				41EFFCEF2EBB34DA00723517 /* Secrets.xcconfig */,
+				410C48902ED327100076D090 /* config.storekit */,
 			);
 			sourceTree = "<group>";
 		};
@@ -421,6 +425,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				410C48922ED327100076D090 /* config.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -442,6 +447,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				410C48912ED327100076D090 /* config.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

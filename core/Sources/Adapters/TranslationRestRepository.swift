@@ -71,7 +71,7 @@ public struct TranslationRestRepository: TranslationRepository {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let username = "verba"
+        let username = byUser.id
         let wsseHeader = makeWsseHeader(username: username, secret: secret)
         request.setValue(wsseHeader, forHTTPHeaderField: "Authorization")
 

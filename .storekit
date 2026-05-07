@@ -1,0 +1,40 @@
+{
+    "identifier" : "12345678",
+    "nonRenewingSubscriptions" : [ ],
+    "products" : [ ],
+    "settings" : { },
+    "subscriptionGroups" : [
+        {
+            "id" : "premium_subscriptions",
+            "localizations" : [ ],
+            "name" : "Premium",
+            "subscriptions" : [
+                {
+                    "adHocOffers" : [ ],
+                    "codeOffers" : [ ],
+                    "displayPrice" : "4.99",
+                    "familyShareable" : false,
+                    "groupNumber" : 1,
+                    "internalID" : "premium_monthly",
+                    "introductoryOffer" : null,
+                    "localizations" : [
+                        {
+                            "description" : "Premium translation access",
+                            "displayName" : "Premium Monthly",
+                            "locale" : "en_US"
+                        }
+                    ],
+                    "productID" : "com.yourapp.premium.monthly",
+                    "recurringSubscriptionPeriod" : "P1M",
+                    "referenceName" : "Premium Monthly",
+                    "subscriptionGroupID" : "premium_subscriptions",
+                    "type" : "RecurringSubscription"
+                }
+            ]
+        }
+    ],
+    "version" : {
+        "major" : 3,
+        "minor" : 0
+    }
+}

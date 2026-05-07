@@ -19,6 +19,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusBarController: StatusBarController?
     private var mainWindow: NSWindow? // keep a strong reference
 
+    private let doublePressInterval: TimeInterval = 0.5
+    private var pendingQuitConfirmationWorkItem: DispatchWorkItem?
+    private var isQuitConfirmationVisible = false
+    private var allowImmediateTermination = false
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         statusBarController = StatusBarController(
@@ -116,6 +121,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     // MARK: - NSWindowDelegate
 
+    // Single Cmd+Q: show confirmation. Double Cmd+Q within interval: quit immediately.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        if allowImmediateTermination {
+            allowImmediateTermination = false
+            pendingQuitConfirmationWorkItem?.cancel()
+            pendingQuitConfirmationWorkItem = nil
+            return .terminateNow
+        }
+
+        if let workItem = pendingQuitConfirmationWorkItem {
+            workItem.cancel()
+            pendingQuitConfirmationWorkItem = nil
+            return .terminateNow
+        }
+
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            self.pendingQuitConfirmationWorkItem = nil
+            self.presentQuitConfirmation()
+        }
+        pendingQuitConfirmationWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + doublePressInterval, execute: workItem)
+        return .terminateCancel
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         NSApp.setActivationPolicy(.accessory)
         return false
@@ -130,6 +160,54 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     // MARK: - Helpers
+
+    private func presentQuitConfirmation() {
+        guard !isQuitConfirmationVisible else { return }
+        isQuitConfirmationVisible = true
+
+        let alert = NSAlert()
+        alert.messageText = "Quit Verba?"
+        alert.informativeText = "Are you sure you want to quit?"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Quit")      // .alertFirstButtonReturn
+        alert.addButton(withTitle: "Hide")      // .alertSecondButtonReturn
+
+        if let window = self.mainWindow, window.isVisible {
+            alert.beginSheetModal(for: window) { response in
+                self.isQuitConfirmationVisible = false
+                if response == .alertFirstButtonReturn {
+                    self.allowImmediateTermination = true
+                    NSApp.terminate(nil)
+                } else {
+                    self.hideMainWindow()
+                }
+            }
+        } else {
+            // Fallback when no window exists: modal alert (blocks), then terminate if confirmed
+            let response = alert.runModal()
+            isQuitConfirmationVisible = false
+            if response == .alertFirstButtonReturn {
+                allowImmediateTermination = true
+                return NSApp.terminate(nil)
+            } else {
+                hideMainWindow()
+            }
+        }
+    }
+
+    private func hideMainWindow() {
+        if let window = mainWindow, window.isVisible {
+            window.close()
+            return
+        }
+
+        if let window = (NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first(where: { isUsableContentWindow($0) && $0.isVisible })) {
+            window.close()
+            return
+        }
+
+        NSApp.hide(nil)
+    }
 
     private func present(_ window: NSWindow) {
         Self.logger.debug("present")
