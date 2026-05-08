@@ -17,6 +17,14 @@ struct MockHttpClient: HttpClient {
     }
 }
 
+/// Stub token provider that returns a fixed dummy token so `executeRequest` tests are
+/// isolated from real RSA operations.
+struct StubTokenProvider: BearerTokenProvider {
+    func makeToken(payload: String) async throws -> String {
+        return "0.stub.aGFzaA==.2024-01-01T00:00:00Z.1.c2ln"
+    }
+}
+
 private func httpResponse(url: URL = URL(string: "https://example.com")!, status: Int) -> HTTPURLResponse {
     return HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: nil)!
 }
@@ -27,7 +35,7 @@ struct TranslationRestRepositoryExecuteRequestTests {
     // Helper to build a repository with a given mock result
     func makeRepo(with result: Result<(Data, URLResponse), Error>) -> TranslationRestRepository {
         let mock = MockHttpClient(result: result)
-        return TranslationRestRepository(httpClient: mock)
+        return TranslationRestRepository(tokenProvider: StubTokenProvider(), httpClient: mock)
     }
 
     @Test("200 OK -> parser success")

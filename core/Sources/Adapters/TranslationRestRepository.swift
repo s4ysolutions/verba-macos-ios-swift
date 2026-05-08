@@ -1,4 +1,3 @@
-import CryptoKit
 import Foundation
 import OSLog
 
@@ -24,15 +23,23 @@ private struct TranslationResponseDTO: Codable {
 }
 
 public struct TranslationRestRepository: TranslationRepository {
-    private static let baseURL = "https://verba.s4y.solutions"
-    //private static let baseURL = "http://localhost:4000"
+    //private static let baseURL = "https://verba.s4y.solutions"
+    private static let baseURL = "http://localhost:8080"
     private static let translationUrl = URL(string: "\(baseURL)/translation")!
     private static let providersUrl = URL(string: "\(baseURL)/providers")!
-    private let secret: String
+
+    private let tokenProvider: BearerTokenProvider
     private let httpClient: HttpClient
 
-    public init(httpClient: HttpClient = URLSession.shared) {
-        secret = Bundle.main.object(forInfoDictionaryKey: "VERBA_SECRET") as! String
+    /// - Parameters:
+    ///   - tokenProvider: Builds and signs the Bearer token for every request.
+    ///     Typically an `AuthService` instance.
+    ///   - httpClient: Defaults to `URLSession.shared`.
+    public init(
+        tokenProvider: BearerTokenProvider,
+        httpClient: HttpClient = URLSession.shared
+    ) {
+        self.tokenProvider = tokenProvider
         self.httpClient = httpClient
     }
 
@@ -40,9 +47,13 @@ public struct TranslationRestRepository: TranslationRepository {
         var request = URLRequest(url: Self.providersUrl)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let username = "verba"
-        let wsseHeader = makeWsseHeader(username: username, secret: secret)
-        request.setValue(wsseHeader, forHTTPHeaderField: "Authorization")
+
+        do {
+            let token = try await tokenProvider.makeToken(payload: "")
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        } catch {
+            return .failure(.unexpected(error.localizedDescription))
+        }
 
         return await executeRequest(request) { data in
             do {
@@ -58,22 +69,23 @@ public struct TranslationRestRepository: TranslationRepository {
             } catch {
                 let string = String(data: data, encoding: .utf8) ?? "<binary data>"
                 logger.error("Get providers expected JSON array in response, got: \(string)\n\(error)")
-                return
-                    .failure(
-                        .decodingFailed(NSLocalizedString("msg.get-providers", comment: ""), data, error.localizedDescription))
+                return .failure(
+                    .decodingFailed(NSLocalizedString("msg.get-providers", comment: ""), data, error.localizedDescription))
             }
         }
     }
 
     public func translate(from translationRequest: TranslationRequest, byUser: User) async -> Result<TranslationResponse, ApiError> {
-        // Build request
         var request = URLRequest(url: Self.translationUrl)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let username = byUser.id
-        let wsseHeader = makeWsseHeader(username: username, secret: secret)
-        request.setValue(wsseHeader, forHTTPHeaderField: "Authorization")
+        do {
+            let token = try await tokenProvider.makeToken(payload: "")
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        } catch {
+            return .failure(.unexpected(error.localizedDescription))
+        }
 
         // Map enums to server-expected strings
         let modeString: String = {
@@ -110,8 +122,9 @@ public struct TranslationRestRepository: TranslationRepository {
             let data = try JSONSerialization.data(withJSONObject: bodyDict, options: [])
             request.httpBody = data
         } catch {
-            return .failure(.encodingFailed(NSLocalizedString("error.api.encoding.json", comment: "Error while encoding translation requst as JSON"), error))
+            return .failure(.encodingFailed(NSLocalizedString("error.api.encoding.json", comment: "Error while encoding translation request as JSON"), error))
         }
+
         return await executeRequest(request) { data in
             do {
                 let dto = try JSONDecoder().decode(TranslationResponseDTO.self, from: data)
@@ -136,9 +149,8 @@ public struct TranslationRestRepository: TranslationRepository {
             } catch {
                 let string = String(data: data, encoding: .utf8) ?? "<binary data>"
                 logger.error("Failed to decode translation response, got \(string):\n\(error)")
-                return
-                    .failure(
-                        .decodingFailed(NSLocalizedString("msg.translate", comment: ""), data, error.localizedDescription))
+                return .failure(
+                    .decodingFailed(NSLocalizedString("msg.translate", comment: ""), data, error.localizedDescription))
             }
         }
     }
@@ -199,68 +211,6 @@ public struct TranslationRestRepository: TranslationRepository {
         }
     }
 
-    // MARK: - WSSE helpers
-
-    // Builds a WSSE UsernameToken header string:
-    // UsernameToken Username="...", PasswordDigest="...", Nonce="...", Created="..."
-    private func makeWsseHeader(username: String, secret: String) -> String {
-        let nonceData = secureRandomData(count: 16)
-        let nonceB64 = nonceData.base64EncodedString()
-
-        let created = iso8601NowUTC()
-
-        // Digest = Base64(SHA-256(Nonce + Created + Secret))
-        let digestB64 = wsseDigestBase64(nonceB64: nonceB64, created: created, secret: secret)
-
-        return #"UsernameToken Username="\#(username)", PasswordDigest="\#(digestB64)", Nonce="\#(nonceB64)", Created="\#(created)""#
-    }
-
-    // Returns Base64(SHA-256(Nonce + Created + Secret)), concatenating as UTF-8 bytes
-    private func wsseDigestBase64(nonceB64: String, created: String, secret: String) -> String {
-        let concatenated = nonceB64 + created + secret
-        let data = Data(concatenated.utf8)
-        let hash = SHA256.hash(data: data)
-        let digestData = Data(hash)
-        return digestData.base64EncodedString()
-    }
-
-    // Generates cryptographically secure random bytes
-    private func secureRandomData(count: Int) -> Data {
-        var bytes = [UInt8](repeating: 0, count: count)
-        let status = SecRandomCopyBytes(kSecRandomDefault, count, &bytes)
-        if status == errSecSuccess {
-            return Data(bytes)
-        } else {
-            // Fallback to CryptoKit random if SecRandom fails (unlikely)
-            var buffer = Data(count: count)
-            _ = buffer.withUnsafeMutableBytes { ptr in
-                guard let base = ptr.baseAddress else { return }
-                // Fill using random bytes from UInt64
-                var remaining = count
-                var offset = 0
-                while remaining > 0 {
-                    let rnd = UInt64.random(in: UInt64.min ... UInt64.max)
-                    var rndLE = rnd.littleEndian
-                    let toCopy = min(remaining, MemoryLayout.size(ofValue: rndLE))
-                    withUnsafeBytes(of: &rndLE) { src in
-                        memcpy(base.advanced(by: offset), src.baseAddress!, toCopy)
-                    }
-                    remaining -= toCopy
-                    offset += toCopy
-                }
-            }
-            return buffer
-        }
-    }
-
-    // ISO-8601 UTC timestamp with 'Z', no fractional seconds, e.g. 2025-11-04T12:34:56Z
-    private func iso8601NowUTC() -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        // Use internet date time without fractions to match Instant.parse expectations
-        formatter.formatOptions = [.withInternetDateTime, .withDashSeparatorInDate, .withColonSeparatorInTime, .withTimeZone]
-        return formatter.string(from: Date())
-    }
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "verba-masos", category: "TranslationRestRepository")
 }
