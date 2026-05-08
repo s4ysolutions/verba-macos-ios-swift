@@ -1,6 +1,8 @@
 import Foundation
 import StoreKit
 
+// TODO: is not used at the moment
+
 public final class StoreKitStoreRepository: StoreRepository {
     private let productIds: [String]
 

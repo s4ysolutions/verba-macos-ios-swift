@@ -28,11 +28,10 @@ public actor AuthService: UserRepository, BearerTokenProvider {
     ///   - keyRepository: Persists the RSA key pair and the numeric user ID.
     ///   - httpClient: Used for the one-time registration call.
     ///   - registrationURL: `POST` endpoint that accepts `{"type":"Anonymous","spki":"..."}`.
-    ///     Defaults to `https://verba.s4y.solutions/registerPublicKey`.
     public init(
         keyRepository: AuthKeyRepository,
         httpClient: HttpClient = URLSession.shared,
-        registrationURL: URL = URL(string: "https://verba.s4y.solutions/registerPublicKey")!
+        registrationURL: URL = BackendConfig.registrationURL
     ) {
         self.keyRepository = keyRepository
         self.httpClient = httpClient
@@ -173,5 +172,4 @@ public actor AuthService: UserRepository, BearerTokenProvider {
         return formatter.string(from: Date())
     }
 }
-
 

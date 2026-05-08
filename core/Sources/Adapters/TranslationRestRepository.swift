@@ -23,10 +23,8 @@ private struct TranslationResponseDTO: Codable {
 }
 
 public struct TranslationRestRepository: TranslationRepository {
-    //private static let baseURL = "https://verba.s4y.solutions"
-    private static let baseURL = "http://localhost:8080"
-    private static let translationUrl = URL(string: "\(baseURL)/translation")!
-    private static let providersUrl = URL(string: "\(baseURL)/providers")!
+    private static let translationUrl = BackendConfig.restBaseURL.appendingPathComponent("translation")
+    private static let providersUrl = BackendConfig.restBaseURL.appendingPathComponent("providers")
 
     private let tokenProvider: BearerTokenProvider
     private let httpClient: HttpClient

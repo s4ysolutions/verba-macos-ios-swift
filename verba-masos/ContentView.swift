@@ -237,14 +237,19 @@ struct ContentView: View {
     }
 }
 
+private struct PreviewTokenProvider: BearerTokenProvider {
+    func makeToken(payload: String) async throws -> String { "preview-token" }
+}
+
 #Preview {
+    let tokenProvider = PreviewTokenProvider()
     ContentView(
         translateUseCase: TranslationService(
-            translationRepository: TranslationRestRepository(),
+            translationRepository: TranslationRestRepository(tokenProvider: tokenProvider),
             userRepository: UserDeviceRepository()
         ),
         getProvidersUseCase: TranslationService(
-            translationRepository: TranslationRestRepository(),
+            translationRepository: TranslationRestRepository(tokenProvider: tokenProvider),
             userRepository: UserDeviceRepository()
         )
     )

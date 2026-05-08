@@ -1,17 +1,24 @@
-//
-//  verba_masosTests.swift
-//  verba-masosTests
-//
-//  Created by Dolin Sergey on 2. 11. 2025..
-//
-
+import Foundation
 import Testing
-@testable import verba_masos
+import core
 
 struct verba_masosTests {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-    }
+    @Test("Integration: TranslationRestRepository returns providers")
+    func translationRestRepositoryProvidersShouldReturnNonEmptyList() async throws {
+        let authService = AuthService(keyRepository: KeychainAuthKeyRepository())
+        let repository = TranslationRestRepository(tokenProvider: authService)
 
+        let result = await repository.providers()
+
+        switch result {
+        case let .success(providers):
+            #expect(!providers.isEmpty)
+            #expect(providers.allSatisfy { !$0.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty })
+            #expect(providers.contains { !$0.qualities.isEmpty })
+        case let .failure(error):
+            Issue.record("providers() failed with: \(error.localizedDescription)")
+            #expect(Bool(false))
+        }
+    }
 }

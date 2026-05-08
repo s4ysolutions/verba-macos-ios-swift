@@ -9,9 +9,10 @@ struct verba_masosApp: App {
     }
 
     init() {
+        let authService = AuthService(keyRepository: KeychainAuthKeyRepository())
         let translationService = TranslationService(
-            translationRepository: TranslationRestRepository(),
-            userRepository: UserDeviceRepository())
+            translationRepository: TranslationRestRepository(tokenProvider: authService),
+            userRepository: authService)
         appDelegate.translateUseCase = translationService
         appDelegate.getProvidersUseCase = translationService
         UserDefaults.standard.register(defaults: [
