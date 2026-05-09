@@ -4,3 +4,9 @@
 "label.to" = "Язык перевода";
 "menu.show" = "Показать";
 "menu.quit" = "Завершить";
+
+"alert.quit.title" = "Выйти из Verba?";
+"alert.quit.message" = "Вы уверены, что хотите выйти?";
+"alert.quit.button.quit" = "Выйти";
+"alert.quit.button.hide" = "Скрыть";
+"alert.quit.button.cancel" = "Отмена";

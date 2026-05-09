@@ -17,3 +17,9 @@
 "entity.quality.fast" = "Fast";
 "entity.quality.optimal" = "Optimal";
 "entity.quality.thinking" = "Thinking";
+
+"alert.quit.title" = "Quit Verba?";
+"alert.quit.message" = "Are you sure you want to quit?";
+"alert.quit.button.quit" = "Quit";
+"alert.quit.button.hide" = "Hide";
+"alert.quit.button.cancel" = "Cancel";

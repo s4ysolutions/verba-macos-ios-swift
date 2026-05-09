@@ -399,6 +399,7 @@
 				en,
 				Base,
 				ru,
+				"sr-Latn",
 			);
 			mainGroup = 41A35C132EB7D92C009B2ED9;
 			minimizedProjectReferenceProxies = 1;

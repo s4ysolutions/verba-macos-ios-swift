@@ -1,0 +1,22 @@
+"error.api.request-too-big" = "Zahtev je previše velik";
+"error.api.decoding-default" = "Neočekivana greška pri dekodovanju";
+"error.ui.no-provider" = "Nema prevodioca";
+"error.ui.no-quality" = "Ovaj prevodilac nema dozvoljeni kvalitet";
+"label.copy" = "Kopiraj";
+"label.from" = "Izvorni jezik";
+"label.translate" = "Prevedi";
+"label.to" = "Ciljni jezik";
+"menu.show" = "Prikaži";
+"menu.quit" = "Zatvori";
+"msg.get-providers" = "Preuzimanje liste prevodilaca";
+"msg.translate" = "Prevođenje";
+"entity.quality.fast" = "Brzo";
+"entity.quality.optimal" = "Optimalno";
+"entity.quality.thinking" = "Duboko";
+
+"alert.quit.title" = "Zatvoriti Verbu?";
+"alert.quit.message" = "Da li ste sigurni da želite da zatvorite aplikaciju?";
+"alert.quit.button.quit" = "Zatvori";
+"alert.quit.button.hide" = "Sakrij";
+"alert.quit.button.cancel" = "Otkaži";
+

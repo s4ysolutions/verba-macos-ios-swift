@@ -173,12 +173,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         isQuitConfirmationVisible = true
 
         let alert = NSAlert()
-        alert.messageText = "Quit Verba?"
-        alert.informativeText = "Are you sure you want to quit?"
+        alert.messageText = NSLocalizedString("alert.quit.title", comment: "Quit confirmation title")
+        alert.informativeText = NSLocalizedString("alert.quit.message", comment: "Quit confirmation message")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Quit")      // .alertFirstButtonReturn
-        alert.addButton(withTitle: "Hide")      // .alertSecondButtonReturn
-        alert.addButton(withTitle: "Cancel")    // .alertThirdButtonReturn
+        alert.addButton(withTitle: NSLocalizedString("alert.quit.button.quit", comment: "Quit button"))
+        alert.addButton(withTitle: NSLocalizedString("alert.quit.button.hide", comment: "Hide button"))
+        alert.addButton(withTitle: NSLocalizedString("alert.quit.button.cancel", comment: "Cancel button"))
 
         if let window = self.mainWindow, window.isVisible {
             alert.beginSheetModal(for: window) { response in
