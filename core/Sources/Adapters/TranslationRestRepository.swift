@@ -45,13 +45,7 @@ public struct TranslationRestRepository: TranslationRepository {
         var request = URLRequest(url: Self.providersUrl)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        do {
-            let token = try await tokenProvider.makeToken(payload: "")
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } catch {
-            return .failure(.unexpected(error.localizedDescription))
-        }
+        // providers is a public endpoint — no auth required
 
         return await executeRequest(request) { data in
             do {

@@ -153,6 +153,7 @@ final class TranslationViewModel: ObservableObject {
     func cancelTranslation() {
         currentTranslationTask?.cancel()
         currentTranslationTask = nil
+        pendingTranslationRequest = nil
         isTranslating = false
     }
 

@@ -178,6 +178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         alert.alertStyle = .warning
         alert.addButton(withTitle: "Quit")      // .alertFirstButtonReturn
         alert.addButton(withTitle: "Hide")      // .alertSecondButtonReturn
+        alert.addButton(withTitle: "Cancel")    // .alertThirdButtonReturn
 
         if let window = self.mainWindow, window.isVisible {
             alert.beginSheetModal(for: window) { response in
@@ -185,9 +186,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 if response == .alertFirstButtonReturn {
                     self.allowImmediateTermination = true
                     NSApp.terminate(nil)
-                } else {
+                } else if response == .alertSecondButtonReturn {
                     self.hideMainWindow()
                 }
+                // .alertThirdButtonReturn (Cancel) — dismiss alert, do nothing
             }
         } else {
             // Fallback when no window exists: modal alert (blocks), then terminate if confirmed
@@ -196,9 +198,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if response == .alertFirstButtonReturn {
                 allowImmediateTermination = true
                 return NSApp.terminate(nil)
-            } else {
+            } else if response == .alertSecondButtonReturn {
                 hideMainWindow()
             }
+            // .alertThirdButtonReturn (Cancel) — dismiss alert, do nothing
         }
     }
 
