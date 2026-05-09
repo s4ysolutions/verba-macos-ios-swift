@@ -7,8 +7,7 @@ struct verba_iosApp: App {
 
     // Create a shared service that conforms to both TranslateUseCase and GetProvidersUseCase
     private let translationService = TranslationService(
-        translationRepository: TranslationRestRepository(),
-        userRepository: UserDeviceRepository()
+        translationRepository: TranslationRestRepository()
     )
     @AppStorage(autoCopyKey) private var autoCopy: Bool = true
     @AppStorage(autoPasteKey) private var autoPaste: Bool = true

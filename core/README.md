@@ -55,11 +55,12 @@ Dependency direction:
 ### 3. Auth flow
 
 1. `AuthService` asks `AuthKeyRepository` for RSA keypair (load or create).
-2. If no stored user id, `AuthService` posts SPKI public key to `/registerPublicKey`.
-3. Returned `userId` is persisted via `AuthKeyRepository.saveUserId`.
-4. For each request, `AuthService.makeToken(payload:)` creates:
-   - `<userId>.<payload>.<keyHash>.<timestamp>.<nonce>.<signature>`
-5. Signature is RSA PKCS#1 v1.5 SHA-256 over first five fields.
+2. On first use, `AuthService` posts SPKI public key to `/registerPublicKey`.
+   The server responds `200 {}` — **no `userId` is returned**.  The operation is idempotent.
+3. The client's identity is the **SHA-256 hash of the SPKI** (Base64-encoded), computed locally.
+4. For each request, `AuthService.makeToken(payload:)` creates a **5-field** token:
+   - `<payload>.<keyHash>.<timestamp>.<nonce>.<signature>`
+5. Signature is RSA PKCS#1 v1.5 SHA-256 over the first four fields.
 
 ## Public Contracts
 
@@ -69,13 +70,13 @@ Dependency direction:
 - `TranslationProvider`: provider `id`, `displayName`, supported qualities.
 - `TranslationMode`: `.TranslateSentence`, `.ExplainWords`, `.Auto`.
 - `TranslationQuality`: `.Fast`, `.Optimal`, `.Thinking`.
-- `User`: currently just `id`.
+- `User`: currently just `id` (the Base64 SHA-256 hash of the public key SPKI).
 - `KeyPair`: `SecKey` private key + SPKI bytes + public key hash.
 - Store entities: `Purchasable`, `Purchased`.
 
 ### Domain ports
 - `TranslationRepository`
-  - `translate(from:byUser:)`
+  - `translate(from:)`
   - `providers()`
 - `UserRepository`
   - `me()`
@@ -88,8 +89,6 @@ Dependency direction:
   - `makeToken(payload:)`
 - `AuthKeyRepository`
   - `getOrCreateKeyPair()`
-  - `saveUserId(_:)`
-  - `loadUserId()`
 
 ### Application use-case ports
 - `TranslateUseCase.translate(from:)`
@@ -109,7 +108,7 @@ Dependency direction:
 - `KeychainAuthKeyRepository`
   - Stores RSA-2048 private key in Keychain.
   - Builds SPKI from PKCS#1 public key bytes.
-  - Persists user id in `UserDefaults`.
+  - No longer persists a user ID — identity is the key hash.
 
 - `UserDeviceRepository`
   - iOS: `UIDevice.current.identifierForVendor`.
@@ -132,7 +131,7 @@ Dependency direction:
   - includes auth, rate-limit, request-size, encoding/decoding, HTTP, networking, unexpected.
 
 - `AuthError`
-  - keychain, key generation, registration, missing user id, signing.
+  - keychain, key generation, registration, signing.
 
 - `StoreError`
   - currently `.unexpected` only.
@@ -151,10 +150,9 @@ let translationRepo = TranslationRestRepository(
 )
 
 let translationService = TranslationService(
-    translationRepository: translationRepo,
-    userRepository: authService
+    translationRepository: translationRepo
 )
-
+```
 let storeRepository = StoreKitStoreRepository(productIds: [
     "your.product.id"
 ])
@@ -165,7 +163,8 @@ let storeRepository = StoreKitStoreRepository(productIds: [
 - Prefer using `TranslateUseCase` and `GetProvidersUseCase` abstractions in shared/UI code.
 - `TranslationService.translate` currently `fatalError`s when user resolution fails.
 - `TranslationRestRepository` is hardcoded to localhost base URL right now.
-- `AuthService` expects registration response JSON to include `userId`.
+- `AuthService` no longer needs a `userId` from the server; registration just confirms the key is stored.
+- `User.id` is the Base64 SHA-256 hash of the SPKI, computed locally without any server round-trip.
 - `TranslationRequest.create` allows empty `sourceLang` (stored as `nil`) but enforces target language length constraints.
 - Existing tests focus on `TranslationRestRepository.executeRequest` status/error mapping.
 

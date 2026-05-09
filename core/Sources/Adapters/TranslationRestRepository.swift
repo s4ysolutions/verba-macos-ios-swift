@@ -24,7 +24,7 @@ private struct TranslationResponseDTO: Codable {
 
 public struct TranslationRestRepository: TranslationRepository {
     private static let translationUrl = BackendConfig.restBaseURL.appendingPathComponent("translation")
-    private static let providersUrl = BackendConfig.restBaseURL.appendingPathComponent("providers")
+    private static let providersUrl = BackendConfig.restBaseURL.appendingPathComponent("translation/providers")
 
     private let tokenProvider: BearerTokenProvider
     private let httpClient: HttpClient
@@ -73,7 +73,7 @@ public struct TranslationRestRepository: TranslationRepository {
         }
     }
 
-    public func translate(from translationRequest: TranslationRequest, byUser: User) async -> Result<TranslationResponse, ApiError> {
+    public func translate(from translationRequest: TranslationRequest) async -> Result<TranslationResponse, ApiError> {
         var request = URLRequest(url: Self.translationUrl)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -113,7 +113,6 @@ public struct TranslationRestRepository: TranslationRepository {
             "provider": providerString,
             "quality": qualityString,
             "ipa": translationRequest.ipa,
-            "userId": byUser.id,
         ]
 
         do {

@@ -2,11 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>VERBA_SECRET</key>
-	<string>$(VERBA_SECRET)</string>
-	<key>LSUIElement</key>
-	<false/>
 	<key>NSAccessibilityUsageDescription</key>
 	<string>This app needs accessibility access to detect double Cmd+C keyboard shortcuts globally for translation.</string>
+	<key>VERBA_SECRET</key>
+	<string>$(VERBA_SECRET)</string>
 </dict>
 </plist>

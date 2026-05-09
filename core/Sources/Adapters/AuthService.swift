@@ -7,13 +7,15 @@ private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "verba", 
 /// Application-layer actor that drives the RSA-based authentication lifecycle:
 ///
 /// 1. **Key generation** — calls `AuthKeyRepository.getOrCreateKeyPair()` on first use.
-/// 2. **Registration** — `POST /registerPublicKey` with the SPKI-encoded public key;
-///    persists the returned numeric `userId`.  The operation is idempotent on the server
-///    side, so re-registering the same key always yields the same user.
-/// 3. **Token creation** — builds and signs the 6-field Bearer token on every request.
+/// 2. **Registration** — `POST /registerPublicKey` with the SPKI-encoded public key.
+///    The server responds `200 {}` — no `userId` is returned.  The operation is idempotent.
+/// 3. **Token creation** — builds and signs the 5-field Bearer token on every request:
+///    `<payload>.<publicKeyHash>.<timestamp>.<nonce>.<signature>`
 ///
 /// The actor also implements `UserRepository` so it can be injected wherever a
-/// `UserRepository` is expected (e.g. `TranslationService`).
+/// `UserRepository` is expected (e.g. `TranslationService`).  `User.id` is the
+/// Base64-encoded SHA-256 hash of the public key SPKI — this never exposes a server-side
+/// numeric identity.
 public actor AuthService: UserRepository, BearerTokenProvider {
 
     private let keyRepository: AuthKeyRepository
@@ -22,10 +24,10 @@ public actor AuthService: UserRepository, BearerTokenProvider {
 
     // In-memory cache; reset if the actor is re-created.
     private var cachedKeyPair: KeyPair?
-    private var cachedUserId: Int64?
+    private var registered: Bool = false
 
     /// - Parameters:
-    ///   - keyRepository: Persists the RSA key pair and the numeric user ID.
+    ///   - keyRepository: Persists the RSA key pair.
     ///   - httpClient: Used for the one-time registration call.
     ///   - registrationURL: `POST` endpoint that accepts `{"type":"Anonymous","spki":"..."}`.
     public init(
@@ -40,12 +42,12 @@ public actor AuthService: UserRepository, BearerTokenProvider {
 
     // MARK: - UserRepository
 
-    /// Returns a `User` whose `id` is the string representation of the server-assigned
-    /// numeric user ID (e.g. `"42"`).
+    /// Returns a `User` whose `id` is the Base64-encoded SHA-256 hash of the public key SPKI.
+    /// This is computed locally — no server round-trip needed.
     public func me() async -> Result<User, ApiError> {
         do {
-            let (_, userId) = try await ensureRegistered()
-            return .success(User(id: String(userId)))
+            let keyPair = try await ensureRegistered()
+            return .success(User(id: keyPair.publicKeyHashBase64))
         } catch {
             return .failure(.unexpected(error.localizedDescription))
         }
@@ -53,18 +55,18 @@ public actor AuthService: UserRepository, BearerTokenProvider {
 
     // MARK: - BearerTokenProvider
 
-    /// Builds the signed 6-field token:
-    /// `<userId>.<payload>.<keyHash>.<timestamp>.<nonce>.<signature>`
+    /// Builds the signed 5-field token:
+    /// `<payload>.<keyHash>.<timestamp>.<nonce>.<signature>`
     ///
-    /// The `signature` covers the first 5 fields joined by `.` using SHA256withRSA.
+    /// The `signature` covers the first 4 fields joined by `.` using SHA256withRSA.
     public func makeToken(payload: String) async throws -> String {
-        let (keyPair, userId) = try await ensureRegistered()
+        let keyPair = try await ensureRegistered()
 
         let timestamp = iso8601Now()
         let nonce = Int64.random(in: 0 ... Int64.max)
         let keyHash = keyPair.publicKeyHashBase64
 
-        let message = "\(userId).\(payload).\(keyHash).\(timestamp).\(nonce)"
+        let message = "0.\(payload).\(keyHash).\(timestamp).\(nonce)"
         let signature = try rsaSign(message: message, privateKey: keyPair.privateKey)
 
         return "\(message).\(signature)"
@@ -72,37 +74,32 @@ public actor AuthService: UserRepository, BearerTokenProvider {
 
     // MARK: - Private
 
-    /// Guarantees a valid `(KeyPair, userId)` pair, running registration if necessary.
-    private func ensureRegistered() async throws -> (KeyPair, Int64) {
-        if let kp = cachedKeyPair, let uid = cachedUserId {
-            return (kp, uid)
+    /// Guarantees a registered `KeyPair`, running registration if this is the first call.
+    @discardableResult
+    private func ensureRegistered() async throws -> KeyPair {
+        let keyPair: KeyPair
+        if let cached = cachedKeyPair {
+            logger.debug("Using cached key pair. SPKI hash: \(cached.publicKeyHashBase64, privacy: .public)")
+            keyPair = cached
+        } else {
+            keyPair = try await keyRepository.getOrCreateKeyPair()
+            logger.debug("Fetched key pair from repository. SPKI hash: \(keyPair.publicKeyHashBase64, privacy: .public)")
+            cachedKeyPair = keyPair
         }
 
-        let keyPair = try await keyRepository.getOrCreateKeyPair()
-        cachedKeyPair = keyPair
-
-        if let storedId = await keyRepository.loadUserId() {
-            logger.debug("Loaded stored userId: \(storedId)")
-            cachedUserId = storedId
-            return (keyPair, storedId)
+        if !registered {
+            logger.debug("Registering public key…")
+            try await registerPublicKey(spki: keyPair.publicKeySPKI)
+            registered = true
+            logger.debug("Public key registered (idempotent).")
         }
 
-        logger.debug("No stored userId — registering public key…")
-        let userId = try await registerPublicKey(spki: keyPair.publicKeySPKI)
-        try await keyRepository.saveUserId(userId)
-        cachedUserId = userId
-        logger.debug("Registered; userId = \(userId)")
-        return (keyPair, userId)
+        return keyPair
     }
 
-    /// Calls `POST <registrationURL>` with `{"type":"Anonymous","spki":"<Base64>"}` and
-    /// returns the server-assigned numeric `userId`.
-    ///
-    /// - Note: CLIENT.md states the response is `200 OK {}`.  In practice the server must
-    ///   return the `userId` for the client to construct valid tokens; this implementation
-    ///   expects `{"userId": <Int64>}` in the response body.  If that field is absent
-    ///   `AuthError.missingUserId` is thrown.
-    private func registerPublicKey(spki: Data) async throws -> Int64 {
+    /// Calls `POST <registrationURL>` with `{"type":"Anonymous","spki":"<Base64>"}`.
+    /// The server returns `200 OK {}` — no body is parsed.
+    private func registerPublicKey(spki: Data) async throws {
         var request = URLRequest(url: registrationURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -123,22 +120,6 @@ public actor AuthService: UserRepository, BearerTokenProvider {
             let body = String(data: data, encoding: .utf8) ?? "<binary>"
             throw AuthError.registrationFailed("HTTP \(http.statusCode): \(body)")
         }
-
-        // Parse userId from the JSON response.
-        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            if let userId = json["userId"] as? Int64 {
-                return userId
-            }
-            // JSONSerialization may decode large integers as Int or Double on some platforms.
-            if let userId = json["userId"] as? Int {
-                return Int64(userId)
-            }
-            if let userId = json["userId"] as? Double {
-                return Int64(userId)
-            }
-        }
-
-        throw AuthError.missingUserId
     }
 
     /// Signs `message` (UTF-8) with RSA-SHA256 PKCS#1 v1.5 and returns a Base64 string.
@@ -172,4 +153,3 @@ public actor AuthService: UserRepository, BearerTokenProvider {
         return formatter.string(from: Date())
     }
 }
-

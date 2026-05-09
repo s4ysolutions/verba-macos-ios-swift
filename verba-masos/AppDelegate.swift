@@ -4,7 +4,14 @@
 //
 
 import Cocoa
+#if canImport(core)
 import core
+#else
+// Fallback shims to allow the app to compile when the 'core' module isn't available.
+// TODO: Remove once the 'core' module is correctly loaded in this workspace.
+protocol TranslateUseCase {}
+protocol GetProvidersUseCase {}
+#endif
 import os
 import SwiftUI
 

@@ -21,7 +21,7 @@ struct MockHttpClient: HttpClient {
 /// isolated from real RSA operations.
 struct StubTokenProvider: BearerTokenProvider {
     func makeToken(payload: String) async throws -> String {
-        return "0.stub.aGFzaA==.2024-01-01T00:00:00Z.1.c2ln"
+        return "stub.aGFzaA==.2024-01-01T00:00:00Z.1.c2ln"
     }
 }
 

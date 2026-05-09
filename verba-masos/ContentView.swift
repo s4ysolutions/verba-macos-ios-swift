@@ -245,12 +245,10 @@ private struct PreviewTokenProvider: BearerTokenProvider {
     let tokenProvider = PreviewTokenProvider()
     ContentView(
         translateUseCase: TranslationService(
-            translationRepository: TranslationRestRepository(tokenProvider: tokenProvider),
-            userRepository: UserDeviceRepository()
+            translationRepository: TranslationRestRepository(tokenProvider: tokenProvider)
         ),
         getProvidersUseCase: TranslationService(
-            translationRepository: TranslationRestRepository(tokenProvider: tokenProvider),
-            userRepository: UserDeviceRepository()
+            translationRepository: TranslationRestRepository(tokenProvider: tokenProvider)
         )
     )
 }

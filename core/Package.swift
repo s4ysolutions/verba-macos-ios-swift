@@ -27,5 +27,10 @@ let package = Package(
             name: "coreTests",
             dependencies: ["core"]
         ),
+        .testTarget(
+            name: "coreIntegrationTests",
+            dependencies: ["core"],
+            path: "Tests/coreIntegrationTests"
+        ),
     ]
 )

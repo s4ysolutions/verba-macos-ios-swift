@@ -9,8 +9,8 @@
 /* Begin PBXBuildFile section */
 		410C48912ED327100076D090 /* config.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 410C48902ED327100076D090 /* config.storekit */; };
 		410C48922ED327100076D090 /* config.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 410C48902ED327100076D090 /* config.storekit */; };
-		41A9B0022EB802EA0055EACB /* core in Frameworks */ = {isa = PBXBuildFile; productRef = 41A9B0012EB802EA0055EACB /* core */; };
-		41CEE95F2EBFDB1400EA64EA /* core in Frameworks */ = {isa = PBXBuildFile; productRef = 41CEE95E2EBFDB1400EA64EA /* core */; };
+		410EF0262FAF6061003BE7FA /* core in Frameworks */ = {isa = PBXBuildFile; productRef = 410EF0252FAF6061003BE7FA /* core */; };
+		410EF0292FAF6087003BE7FA /* core in Frameworks */ = {isa = PBXBuildFile; productRef = 410EF0282FAF6087003BE7FA /* core */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -136,7 +136,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				41A9B0022EB802EA0055EACB /* core in Frameworks */,
+				410EF0262FAF6061003BE7FA /* core in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -158,7 +158,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				41CEE95F2EBFDB1400EA64EA /* core in Frameworks */,
+				410EF0292FAF6087003BE7FA /* core in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -237,7 +237,7 @@
 			);
 			name = "verba-masos";
 			packageProductDependencies = (
-				41A9B0012EB802EA0055EACB /* core */,
+				410EF0252FAF6061003BE7FA /* core */,
 			);
 			productName = "verba-masos";
 			productReference = 41A35C1E2EB7D94E009B2ED9 /* Verba.app */;
@@ -306,7 +306,7 @@
 			);
 			name = "verba-ios";
 			packageProductDependencies = (
-				41CEE95E2EBFDB1400EA64EA /* core */,
+				410EF0282FAF6087003BE7FA /* core */,
 			);
 			productName = "verba-ios";
 			productReference = 41A35C4A2EB7D97C009B2ED9 /* verba-ios.app */;
@@ -403,7 +403,7 @@
 			mainGroup = 41A35C132EB7D92C009B2ED9;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				41A9AFFF2EB7FD5B0055EACB /* XCLocalSwiftPackageReference "core" */,
+				4110DD212FAF60F500D62BCC /* XCLocalSwiftPackageReference "core" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 41A35C1F2EB7D94E009B2ED9 /* Products */;
@@ -631,6 +631,7 @@
 				INFOPLIST_FILE = "verba-masos/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Verba;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				INFOPLIST_KEY_LSUIElement = NO;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -732,6 +733,7 @@
 				INFOPLIST_FILE = "verba-masos/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Verba;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				INFOPLIST_KEY_LSUIElement = NO;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1594,21 +1596,19 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		41A9AFFF2EB7FD5B0055EACB /* XCLocalSwiftPackageReference "core" */ = {
+		4110DD212FAF60F500D62BCC /* XCLocalSwiftPackageReference "core" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = core;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		41A9B0012EB802EA0055EACB /* core */ = {
+		410EF0252FAF6061003BE7FA /* core */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 41A9AFFF2EB7FD5B0055EACB /* XCLocalSwiftPackageReference "core" */;
 			productName = core;
 		};
-		41CEE95E2EBFDB1400EA64EA /* core */ = {
+		410EF0282FAF6087003BE7FA /* core */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 41A9AFFF2EB7FD5B0055EACB /* XCLocalSwiftPackageReference "core" */;
 			productName = core;
 		};
 /* End XCSwiftPackageProductDependency section */

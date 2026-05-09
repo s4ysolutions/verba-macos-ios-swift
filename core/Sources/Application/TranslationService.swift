@@ -5,24 +5,18 @@ private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "verba-ma
 public actor TranslationService:
     TranslateUseCase, GetProvidersUseCase {
     private let translationRepository: TranslationRepository
-    private let userRepository: UserRepository
 
     private var cachedProviders: [TranslationProvider]?
     private var fetchTask: Task<Result<[TranslationProvider], ApiError>, Never>?
 
-    public init(translationRepository: TranslationRepository, userRepository: UserRepository) {
+    public init(translationRepository: TranslationRepository) {
         self.translationRepository = translationRepository
-        self.userRepository = userRepository
     }
 
     public func translate(from translationRequest: TranslationRequest) async
         -> Result<TranslationResponse, TranslationError> {
-        let meResult = await userRepository.me()
-        guard case let .success(me) = meResult else {
-            fatalError("User not logged in")
-        }
         logger.debug("request: \(translationRequest.sourceText)")
-        let response = await translationRepository.translate(from: translationRequest, byUser: me)
+        let response = await translationRepository.translate(from: translationRequest)
         return response.mapError { .api($0) }
     }
 

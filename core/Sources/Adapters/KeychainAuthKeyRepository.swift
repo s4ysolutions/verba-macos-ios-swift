@@ -1,9 +1,11 @@
 import CryptoKit
+import OSLog
+
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "verba", category: "AuthService")
 import Foundation
 import Security
 
-/// Implements `AuthKeyRepository` using the system Keychain for key storage and
-/// `UserDefaults` for the server-assigned numeric user ID.
+/// Implements `AuthKeyRepository` using the system Keychain for key storage.
 ///
 /// - The private key is generated once (RSA-2048) and stored as a permanent Keychain item
 ///   tagged by `keyTag`.
@@ -14,14 +16,11 @@ import Security
 public final class KeychainAuthKeyRepository: AuthKeyRepository, @unchecked Sendable {
 
     private let keyTag: String
-    private let userIdDefaultsKey: String
 
     public init(
-        keyTag: String = "solutions.s4y.verba.auth.privateKey",
-        userIdDefaultsKey: String = "solutions.s4y.verba.auth.userId"
+        keyTag: String = "solutions.s4y.verba.auth.privateKey"
     ) {
         self.keyTag = keyTag
-        self.userIdDefaultsKey = userIdDefaultsKey
     }
 
     // MARK: - AuthKeyRepository
@@ -31,16 +30,6 @@ public final class KeychainAuthKeyRepository: AuthKeyRepository, @unchecked Send
             return existing
         }
         return try generateAndStoreKeyPair()
-    }
-
-    public func saveUserId(_ userId: Int64) async throws {
-        UserDefaults.standard.set(userId, forKey: userIdDefaultsKey)
-    }
-
-    public func loadUserId() async -> Int64? {
-        // UserDefaults stores Int64 as Int natively on 64-bit platforms.
-        guard UserDefaults.standard.object(forKey: userIdDefaultsKey) != nil else { return nil }
-        return Int64(bitPattern: UInt64(bitPattern: Int64(UserDefaults.standard.integer(forKey: userIdDefaultsKey))))
     }
 
     // MARK: - Private — Key management
@@ -103,32 +92,26 @@ public final class KeychainAuthKeyRepository: AuthKeyRepository, @unchecked Send
         let hashBytes = Data(SHA256.hash(data: spki))
         let hashBase64 = hashBytes.base64EncodedString()
 
+        logger.debug("Generated new RSA key pair with SPKI hash \(hashBase64, privacy: .public)")
+
         return KeyPair(privateKey: privateKey, publicKeySPKI: spki, publicKeyHashBase64: hashBase64)
     }
 
     // MARK: - Private — DER / SPKI helpers
 
-    /// Wraps a PKCS#1 RSA public-key DER blob in an X.509 SubjectPublicKeyInfo structure:
-    ///
-    ///     SEQUENCE {
-    ///       SEQUENCE { OID rsaEncryption (1.2.840.113549.1.1.1)  NULL }
-    ///       BIT STRING { 0x00  <pkcs1Data> }
-    ///     }
+    /// Wraps a PKCS#1 RSA public-key DER blob in an X.509 SubjectPublicKeyInfo structure.
     private func wrapInSPKI(pkcs1Data: Data) -> Data {
-        // AlgorithmIdentifier: SEQUENCE { OID rsaEncryption, NULL }
         let algorithmIdentifier = Data([
-            0x30, 0x0d,                                                // SEQUENCE, 13 bytes
-            0x06, 0x09,                                                // OID, 9 bytes
-            0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01,   // 1.2.840.113549.1.1.1
-            0x05, 0x00,                                                // NULL
+            0x30, 0x0d,
+            0x06, 0x09,
+            0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01,
+            0x05, 0x00,
         ])
 
-        // BIT STRING: 0x00 (no unused bits) + raw PKCS#1 bytes
         var bitStringContent = Data([0x00])
         bitStringContent.append(pkcs1Data)
         let bitString = derEncode(tag: 0x03, content: bitStringContent)
 
-        // Outer SEQUENCE
         var spkiContent = algorithmIdentifier
         spkiContent.append(bitString)
         return derEncode(tag: 0x30, content: spkiContent)
@@ -148,4 +131,3 @@ public final class KeychainAuthKeyRepository: AuthKeyRepository, @unchecked Send
         return result
     }
 }
-
