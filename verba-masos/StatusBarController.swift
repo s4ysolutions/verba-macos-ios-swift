@@ -13,6 +13,7 @@ final class StatusBarController {
 
     private let statusItem: NSStatusItem
     private let menu: NSMenu
+    private var requestIpaItem: NSMenuItem?
 
     private let onShow: () -> Void
     private let onQuit: () -> Void
@@ -25,6 +26,14 @@ final class StatusBarController {
 
         menu = NSMenu()
         buildMenu(into: menu)
+
+        // Keep menu item state in sync when the button (or any other code) changes the key.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(userDefaultsDidChange),
+            name: UserDefaults.didChangeNotification,
+            object: nil
+        )
 
         if let button = statusItem.button {
             button.image = NSImage(named: "verba-png-16") // NSImage(systemSymbolName: "text.bubble", accessibilityDescription: nil)
@@ -75,6 +84,7 @@ final class StatusBarController {
         requestIpaItem.onStateImage = NSImage(named: NSImage.menuOnStateTemplateName)
         requestIpaItem.target = self
         menu.addItem(requestIpaItem)
+        self.requestIpaItem = requestIpaItem
 
         menu.addItem(NSMenuItem.separator())
 
@@ -135,6 +145,11 @@ final class StatusBarController {
         sender.state = (sender.state == .on) ? .off : .on
         let newValue = (sender.state == .on)
         UserDefaults.standard.set(newValue, forKey: requestIpaKey)
+    }
+
+    @objc private func userDefaultsDidChange(_ notification: Notification) {
+        let current = UserDefaults.standard.bool(forKey: requestIpaKey)
+        requestIpaItem?.state = current ? .on : .off
     }
 
     @objc private func didTapShow() {

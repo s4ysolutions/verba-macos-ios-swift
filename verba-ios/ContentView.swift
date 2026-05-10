@@ -60,15 +60,10 @@ struct ContentView: View {
                                     .buttonStyle(.borderedProminent)
                                     .tint(.red)
                             } else {
-                                Button(NSLocalizedString(
-                                    "label.translate",
-                                    value: "Translate",
-                                    comment: "Send the content of the text field to the translation service"))
-                                {
+                                TranslateButton {
                                     logger.debug("Launching translation (force: true)")
                                     viewModel.translate(text: viewModel.translatingText, force: true)
                                 }
-                                .buttonStyle(.borderedProminent)
                             }
                         }
                         .padding(.trailing)

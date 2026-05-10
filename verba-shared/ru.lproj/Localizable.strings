@@ -5,6 +5,8 @@
 "menu.show" = "Показать";
 "menu.quit" = "Завершить";
 
+"label.ipa.toggle" = "Переключить фонетическую транскрипцию (МФА)";
+
 "alert.quit.title" = "Выйти из Verba?";
 "alert.quit.message" = "Вы уверены, что хотите выйти?";
 "alert.quit.button.quit" = "Выйти";

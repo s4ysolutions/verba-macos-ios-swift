@@ -14,6 +14,8 @@
 "entity.quality.optimal" = "Optimalno";
 "entity.quality.thinking" = "Duboko";
 
+"label.ipa.toggle" = "Uključi fonetski zapis (IPA)";
+
 "alert.quit.title" = "Zatvoriti Verbu?";
 "alert.quit.message" = "Da li ste sigurni da želite da zatvorite aplikaciju?";
 "alert.quit.button.quit" = "Zatvori";
