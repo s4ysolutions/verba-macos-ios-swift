@@ -147,7 +147,7 @@ final class TranslationViewModel: ObservableObject {
             return
         }
 
-        startTranslationTask()
+        startTranslationTask(force: force)
     }
 
     func cancelTranslation() {
@@ -157,7 +157,7 @@ final class TranslationViewModel: ObservableObject {
         isTranslating = false
     }
 
-    private func performTranslation(generation: Int) async {
+    private func performTranslation(generation: Int, force: Bool) async {
         errorMessage = nil
         guard !isLoading else {
             logger.debug("App is loading, no translating possible")
@@ -235,12 +235,16 @@ final class TranslationViewModel: ObservableObject {
                 }
             case let .failure(error):
                 logger.debug("View model set error: \(error.localizedDescription)")
-                errorMessage = error.localizedDescription
+                if shouldDisplay(error: error, force: force) {
+                    errorMessage = error.localizedDescription
+                }
             }
 
         case let .failure(error):
             logger.debug("View model set error: \(error.localizedDescription)")
-            errorMessage = error.localizedDescription
+            if shouldDisplay(error: error, force: force) {
+                errorMessage = error.localizedDescription
+            }
         }
 
         if generation == translationGeneration {
@@ -320,12 +324,12 @@ final class TranslationViewModel: ObservableObject {
         triggerPendingTranslationIfPossible()
     }
 
-    private func startTranslationTask() {
+    private func startTranslationTask(force: Bool) {
         translationGeneration += 1
         let generation = translationGeneration
         isTranslating = true
         currentTranslationTask = Task {
-            await performTranslation(generation: generation)
+            await performTranslation(generation: generation, force: force)
         }
     }
 
@@ -334,6 +338,16 @@ final class TranslationViewModel: ObservableObject {
         guard let pending = pendingTranslationRequest else { return }
         pendingTranslationRequest = nil
         translate(text: pending.text, force: pending.force)
+    }
+
+    private func shouldDisplay(error: TranslationError, force: Bool) -> Bool {
+        if force {
+            return true
+        }
+        if case .api(.authRequired) = error {
+            return false
+        }
+        return true
     }
 
     private func restoreSavedQuality(from qualities: [TranslationQuality]) -> TranslationQuality? {

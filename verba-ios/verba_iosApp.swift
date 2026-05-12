@@ -5,13 +5,29 @@ import SwiftUI
 struct verba_iosApp: App {
     @State private var showAbout = false
 
-    // Create a shared service that conforms to both TranslateUseCase and GetProvidersUseCase
-    private let translationService = TranslationService(
-        translationRepository: TranslationRestRepository()
-    )
+    // Hybrid backend:
+    // - OpenAI/Gemini through existing Verba backend
+    // - Other models through direct Hugging Face OAuth
+    private let translationService: TranslationService
     @AppStorage(autoCopyKey) private var autoCopy: Bool = true
     @AppStorage(autoPasteKey) private var autoPaste: Bool = true
     @AppStorage(requestIpaKey) private var requestIpa: Bool = true
+
+    init() {
+        let hfTokenProvider = KeychainOAuthTokenProvider()
+        if let bundledToken = Bundle.main.object(forInfoDictionaryKey: "HUGGING_FACE_ACCESS_TOKEN") as? String,
+           !bundledToken.isEmpty {
+            try? hfTokenProvider.setToken(bundledToken)
+        }
+        let backendAuth = AuthService(keyRepository: KeychainAuthKeyRepository())
+
+        translationService = TranslationService(
+            translationRepository: HybridTranslationRepository(
+                backendRepository: TranslationRestRepository(tokenProvider: backendAuth),
+                directRepository: HuggingFaceTranslationRepository(tokenProvider: hfTokenProvider)
+            )
+        )
+    }
 
     var body: some Scene {
         WindowGroup {

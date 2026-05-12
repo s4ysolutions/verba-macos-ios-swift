@@ -9,9 +9,17 @@ struct verba_masosApp: App {
     }
 
     init() {
-        let authService = AuthService(keyRepository: KeychainAuthKeyRepository())
+        let tokenProvider = KeychainOAuthTokenProvider()
+        if let bundledToken = Bundle.main.object(forInfoDictionaryKey: "HUGGING_FACE_ACCESS_TOKEN") as? String,
+           !bundledToken.isEmpty {
+            try? tokenProvider.setToken(bundledToken)
+        }
+        let backendAuth = AuthService(keyRepository: KeychainAuthKeyRepository())
         let translationService = TranslationService(
-            translationRepository: TranslationRestRepository(tokenProvider: authService))
+            translationRepository: HybridTranslationRepository(
+                backendRepository: TranslationRestRepository(tokenProvider: backendAuth),
+                directRepository: HuggingFaceTranslationRepository(tokenProvider: tokenProvider)
+            ))
         appDelegate.translateUseCase = translationService
         appDelegate.getProvidersUseCase = translationService
         UserDefaults.standard.register(defaults: [

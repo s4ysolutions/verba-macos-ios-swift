@@ -22,6 +22,7 @@ struct ContentView: View {
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "verba-masos", category: "ContentView")
 
     @StateObject private var viewModel: TranslationViewModel
+    @StateObject private var authViewModel = HuggingFaceAuthViewModel()
     @FocusState private var focused: Bool
 
     init(translateUseCase: TranslateUseCase, getProvidersUseCase: GetProvidersUseCase) {
@@ -78,9 +79,23 @@ struct ContentView: View {
                     } else {
                         VStack {
                             Group { if let error = viewModel.errorMessage {
-                                Text(error)
-                                    .foregroundColor(.red)
-                                    .frame(maxWidth: .infinity, alignment: .center)
+                                VStack(spacing: 8) {
+                                    Text(error)
+                                        .foregroundColor(.red)
+                                    if error == "Sign in to Hugging Face to translate." {
+                                        Button(authViewModel.isSigningIn ? "Signing in..." : "Sign In") {
+                                            authViewModel.signIn()
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                        .disabled(authViewModel.isSigningIn)
+                                    }
+                                    if let authError = authViewModel.errorMessage {
+                                        Text(authError)
+                                            .font(.footnote)
+                                            .foregroundColor(.red)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
                             } else {
                                 TranslatedText(text: $viewModel.translatedText)
                                 // editableText($viewModel.translatedText)
@@ -119,6 +134,10 @@ struct ContentView: View {
             logger.debug("View: onRecieve")
             updateClipboardText()
             focused = true
+        }
+        .onChange(of: authViewModel.isSignedIn) { isSignedIn in
+            guard isSignedIn, viewModel.errorMessage == "Sign in to Hugging Face to translate." else { return }
+            viewModel.translate(text: viewModel.translatingText, force: true)
         }
     }
 
@@ -186,13 +205,15 @@ struct ContentView: View {
             }
             .pickerStyle(.menu)
 
-            // Quality selector
-            Picker("", selection: $viewModel.quality) {
-                ForEach(viewModel.qualities) { quality in
-                    Text(quality.displayName).tag(Optional(quality))
+            if viewModel.qualities.count > 1 {
+                // Quality selector (Fast/Optimal/Thinking)
+                Picker("", selection: $viewModel.quality) {
+                    ForEach(viewModel.qualities) { quality in
+                        Text(quality.displayName).tag(Optional(quality))
+                    }
                 }
+                .pickerStyle(.menu)
             }
-            .pickerStyle(.menu)
 
             Picker("", selection: $viewModel.provider) {
                 ForEach(viewModel.providers) { provider in
@@ -257,9 +278,14 @@ struct ContentView: View {
     }
 }
 
+private struct PreviewOAuthTokenProvider: OAuthAccessTokenProvider {
+    func accessToken() async throws -> String { "preview-token" }
+}
+
 #Preview {
+    let tokenProvider = PreviewOAuthTokenProvider()
     ContentView(
-        translateUseCase: TranslationService(translationRepository: TranslationRestRepository()),
-        getProvidersUseCase: TranslationService(translationRepository: TranslationRestRepository())
+        translateUseCase: TranslationService(translationRepository: HuggingFaceTranslationRepository(tokenProvider: tokenProvider)),
+        getProvidersUseCase: TranslationService(translationRepository: HuggingFaceTranslationRepository(tokenProvider: tokenProvider))
     )
 }

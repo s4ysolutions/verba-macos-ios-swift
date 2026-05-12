@@ -2,6 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Hugging Face OAuth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(HUGGING_FACE_REDIRECT_SCHEME)</string>
+			</array>
+		</dict>
+	</array>
+	<key>HUGGING_FACE_CLIENT_ID</key>
+	<string>$(HUGGING_FACE_CLIENT_ID)</string>
+	<key>HUGGING_FACE_REDIRECT_SCHEME</key>
+	<string>$(HUGGING_FACE_REDIRECT_SCHEME)</string>
 	<key>VERBA_SECRET</key>
 	<string>$(VERBA_SECRET)</string>
 </dict>

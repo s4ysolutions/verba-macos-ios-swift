@@ -60,9 +60,11 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"/Localized: Localizable.strings",
+				HuggingFaceAuthViewModel.swift,
 				TranslationViewModel.swift,
 				userDefaults.swift,
 				Views/LoadingApp.swift,
+				Views/TranslateButton.swift,
 				Views/TranslatedText.swift,
 				Views/TranslatingText.swift,
 			);

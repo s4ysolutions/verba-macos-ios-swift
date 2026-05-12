@@ -2,6 +2,7 @@ import Foundation
 
 public enum ApiError: Error, LocalizedError {
     case invalidKey
+    case authRequired(String)
     case rateLimitExceeded
     case requestTooBig
     case encodingFailed(String, Error)
@@ -14,7 +15,9 @@ public enum ApiError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .invalidKey:
-            return "Invalid Application key"
+            return "Authorization failed. Sign in again."
+        case let .authRequired(message):
+            return message
         case .rateLimitExceeded:
             return "Rate limit exceeded"
         case .requestTooBig:
