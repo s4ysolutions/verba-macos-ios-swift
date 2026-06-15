@@ -11,6 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create Secrets.xcconfig
+        run: |
+          cat > Secrets.xcconfig <<EOF
+          VERBA_SECRET = unused
+          HUGGING_FACE_CLIENT_ID = unused
+          HUGGING_FACE_REDIRECT_SCHEME = verba
+          EOF
+
       - name: Select Xcode
         run: |
           sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)"
