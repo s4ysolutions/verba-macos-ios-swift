@@ -48,9 +48,7 @@ public final class KeychainAuthKeyRepository: AuthKeyRepository, @unchecked Send
 
         if status == errSecItemNotFound { return nil }
         guard status == errSecSuccess else { throw AuthError.keychainError(status) }
-
-        // swiftlint:disable:next force_cast
-        let privateKey = item as! SecKey
+        let privateKey = item as! SecKey // Security framework guarantees SecKey when kSecReturnRef + kSecAttrKeyClassPrivate
         return try buildKeyPair(privateKey: privateKey)
     }
 

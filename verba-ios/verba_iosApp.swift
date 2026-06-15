@@ -26,10 +26,7 @@ struct verba_iosApp: App {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Menu {
                             // Auto-copy toggle
-                            Button(action: {
-                                let newValue = !(UserDefaults.standard.bool(forKey: autoCopyKey))
-                                UserDefaults.standard.set(newValue, forKey: autoCopyKey)
-                            }) {
+                            Button(action: { autoCopy.toggle() }) {
                                 Label(
                                     NSLocalizedString(
                                         "menu.check.autoCopy",
@@ -41,10 +38,7 @@ struct verba_iosApp: App {
                             }
 
                             // Auto-paste toggle
-                            Button(action: {
-                                let newValue = !(UserDefaults.standard.bool(forKey: autoPasteKey))
-                                UserDefaults.standard.set(newValue, forKey: autoPasteKey)
-                            }) {
+                            Button(action: { autoPaste.toggle() }) {
                                 Label(
                                     NSLocalizedString(
                                         "menu.check.autoPaste",
@@ -56,10 +50,7 @@ struct verba_iosApp: App {
                             }
 
                             // Request IPA toggle
-                            Button(action: {
-                                let newValue = !(UserDefaults.standard.bool(forKey: requestIpaKey))
-                                UserDefaults.standard.set(newValue, forKey: requestIpaKey)
-                            }) {
+                            Button(action: { requestIpa.toggle() }) {
                                 Label(
                                     NSLocalizedString(
                                         "menu.requestIPA",

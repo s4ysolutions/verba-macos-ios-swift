@@ -143,13 +143,17 @@ public actor AuthService: UserRepository, BearerTokenProvider {
         return signatureData.base64EncodedString()
     }
 
+    private let iso8601Formatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.timeZone = TimeZone(secondsFromGMT: 0)
+        f.formatOptions = [.withInternetDateTime,
+                           .withDashSeparatorInDate,
+                           .withColonSeparatorInTime,
+                           .withTimeZone]
+        return f
+    }()
+
     private func iso8601Now() -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        formatter.formatOptions = [.withInternetDateTime,
-                                   .withDashSeparatorInDate,
-                                   .withColonSeparatorInTime,
-                                   .withTimeZone]
-        return formatter.string(from: Date())
+        iso8601Formatter.string(from: Date())
     }
 }

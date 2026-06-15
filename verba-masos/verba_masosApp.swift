@@ -16,11 +16,7 @@ struct verba_masosApp: App {
         appDelegate.getProvidersUseCase = translationService
         UserDefaults.standard.register(defaults: [
             autoCopyKey: true,
-        ])
-        UserDefaults.standard.register(defaults: [
             autoPasteKey: true,
-        ])
-        UserDefaults.standard.register(defaults: [
             requestIpaKey: true,
         ])
         Task {

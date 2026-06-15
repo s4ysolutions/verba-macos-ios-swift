@@ -52,14 +52,6 @@ final class StatusBarController {
     }
 
     private func buildMenu(into menu: NSMenu) {
-        /*
-        let showTitle = NSLocalizedString("menu.show", value: "Show", comment: "Show main window")
-        let showItem = NSMenuItem(title: showTitle, action: #selector(didTapShow), keyEquivalent: "")
-        showItem.target = self
-        menu.addItem(showItem)
-         */
-
-
         // Ensure defaults exist and are true by default
         let defaults = UserDefaults.standard
 

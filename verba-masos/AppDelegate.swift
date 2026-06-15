@@ -44,9 +44,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
         )
 
-        doubleCmdCDetector = GlobalDoubleCmdCDetector {
+        doubleCmdCDetector = GlobalDoubleCmdCDetector { [weak self] in
             Self.logger.debug("Double Cmd+C detected!")
-            self.selectionCapture.captureSelection { [weak self] _ in
+            self?.selectionCapture.captureSelection { [weak self] _ in
                 guard let self = self else {
                     Self.logger.warning("No text captured")
                     return
@@ -104,9 +104,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
 
             Self.logger.debug("Creating new window")
+            guard let translateUseCase = self.translateUseCase,
+                  let getProvidersUseCase = self.getProvidersUseCase else {
+                Self.logger.error("Cannot create window: use cases not set")
+                return
+            }
             let hosting = NSHostingController(rootView: ContentView(
-                translateUseCase: self.translateUseCase!,
-                getProvidersUseCase: self.getProvidersUseCase!
+                translateUseCase: translateUseCase,
+                getProvidersUseCase: getProvidersUseCase
             ))
             let window = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),

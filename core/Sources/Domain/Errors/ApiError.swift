@@ -23,7 +23,7 @@ public enum ApiError: Error, LocalizedError {
             return "Failed to encode data: \(data). Error: \(error.localizedDescription)"
         case let .decodingFailed(location, data, error):
             let string = String(data: data, encoding: .utf8) ?? "<binary data>"
-            return String(format: NSLocalizedString("error.api.decoding", comment: ""), location, error, string) ?? NSLocalizedString("error.api.decoding-default", comment: "")
+            return String(format: NSLocalizedString("error.api.decoding", comment: ""), location, error, string)
         case let .http(code, message):
             return Self.extractHttpErrorMessage(code, message)
         case let .networking(error):
@@ -68,12 +68,4 @@ public enum ApiError: Error, LocalizedError {
         return String(format: NSLocalizedString("error.api.http.code-and-body", comment: "Message to report HTTP status message along with status code"), code, cleaned)
     }
 
-    private static func removeHTMLTags(_ string: String) -> String {
-        return string.replacingOccurrences(
-            of: "<[^>]+>",
-            with: "",
-            options: .regularExpression,
-            range: nil
-        )
-    }
 }

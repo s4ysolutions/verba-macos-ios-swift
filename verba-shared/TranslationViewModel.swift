@@ -42,7 +42,7 @@ final class TranslationViewModel: ObservableObject {
 
     init(translateUseCase: TranslateUseCase, getProviderUseCase: GetProvidersUseCase) {
         self.translateUseCase = translateUseCase
-        getProvidersUseCase = getProviderUseCase
+        self.getProvidersUseCase = getProviderUseCase
         let userDefaults = UserDefaults.standard
 
         // Load persisted languages if available
@@ -185,8 +185,6 @@ final class TranslationViewModel: ObservableObject {
             }
             return
         }
-        logger.debug("View model clear error")
-
         let ipa = UserDefaults.standard.bool(forKey: requestIpaKey)
 
         let requestParsed = TranslationRequest.create(
@@ -229,7 +227,7 @@ final class TranslationViewModel: ObservableObject {
                 lastUsedQuality = quality
                 lastUsedProvider = provider
                 setProviders(response.providers)
-                if UserDefaults.standard.object(forKey: "menu.check.autoPaste") as? Bool ?? true {
+                if UserDefaults.standard.bool(forKey: autoPasteKey) {
                     copyToClipboard(response.translated)
                     logger.debug("Pasted translation to clipboard")
                 }

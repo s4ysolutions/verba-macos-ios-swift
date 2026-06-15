@@ -34,7 +34,7 @@ struct ContentView: View {
                         HStack {
                             Spacer()
                             if !viewModel.isTranslating {
-                                TextField(NSLocalizedString("lable.from", value: "From:", comment: "A language to translate from"),
+                                TextField(NSLocalizedString("label.from", value: "From:", comment: "A language to translate from"),
                                           text: $viewModel.fromLanguage)
                                     .frame(maxWidth: 100)
                             }
@@ -161,12 +161,7 @@ struct ContentView: View {
         #else
             let str = UIPasteboard.general.string ?? ""
         #endif
-        logger.error("Launching translation task (force: false)")
-        Task {
-            logger.error("Translation task (force: false) started")
-            await viewModel.translate(text: str, force: false)
-        }
-        logger.error("Launching translation task (force: false) ended")
+        viewModel.translate(text: str, force: false)
     }
 
     // MARK: - UI helpers

@@ -25,8 +25,10 @@ struct AboutView: View {
             Text("Version \(version)")
                 .foregroundStyle(.secondary)
 
-            Link("Privacy Policy", destination: URL(string: "https://YOUR_PRIVACY_URL_HERE")!)
-                .padding(.top, 8)
+            if let privacyURL = URL(string: "https://s4ysolutions.github.io/verba/privacy/") {
+                Link("Privacy Policy", destination: privacyURL)
+                    .padding(.top, 8)
+            }
 
             Spacer(minLength: 20)
         }
