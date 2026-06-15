@@ -5,10 +5,13 @@ import OSLog
 class GlobalDoubleCmdCDetector {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    private var retainedSelf: Unmanaged<GlobalDoubleCmdCDetector>?
     private var pressTimes: [Date] = []
     private let timeWindow: TimeInterval = 0.5
     private let handler: () -> Void
     private var permissionTimer: Timer?
+    private var permissionPollCount = 0
+    private let maxPermissionPolls = 150  // 5 minutes at 2s interval
 
     init(handler: @escaping () -> Void) {
         self.handler = handler
@@ -16,6 +19,7 @@ class GlobalDoubleCmdCDetector {
 
     func start() -> Bool {
         guard checkAccessibilityPermission() else {
+            _ = requestAccessibilityPermission()
             showAccessibilityAlert()
             return false
         }
@@ -54,27 +58,18 @@ class GlobalDoubleCmdCDetector {
             return Unmanaged.passUnretained(event)
         }
 
-        // Detect triple press
-        detectTriplePress()
+        detectDoublePress()
 
         // IMPORTANT: Return the event unmodified so Cmd+C still works normally
         return Unmanaged.passUnretained(event)
     }
 
-    private func detectTriplePress() {
+    private func detectDoublePress() {
         let now = Date()
-
-        // Remove old presses outside time window
         pressTimes = pressTimes.filter { now.timeIntervalSince($0) < timeWindow }
-
-        // Add current press
         pressTimes.append(now)
-
-        // Check for triple press
         if pressTimes.count >= 2 {
             pressTimes.removeAll()
-
-            // Call handler on main thread
             DispatchQueue.main.async {
                 self.handler()
             }
@@ -85,12 +80,17 @@ class GlobalDoubleCmdCDetector {
         permissionTimer?.invalidate()
         permissionTimer = nil
 
+        if let runLoopSource = runLoopSource {
+            CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
+            self.runLoopSource = nil
+        }
         if let eventTap = eventTap {
             CGEvent.tapEnable(tap: eventTap, enable: false)
+            CFMachPortInvalidate(eventTap)  // guarantees no further callbacks before self is freed
+            self.eventTap = nil
         }
-        if let runLoopSource = runLoopSource {
-            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
-        }
+        retainedSelf?.release()
+        retainedSelf = nil
     }
 
     deinit {
@@ -109,6 +109,10 @@ class GlobalDoubleCmdCDetector {
     private func startEventTap() -> Bool {
         let eventMask = (1 << CGEventType.keyDown.rawValue)
 
+        // Retain self so the C callback holds a valid pointer for its lifetime.
+        // Balanced by release in stop() via CFMachPortInvalidate + manual release.
+        let retained = Unmanaged.passRetained(self)
+
         guard let eventTap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .headInsertEventTap,
@@ -121,15 +125,17 @@ class GlobalDoubleCmdCDetector {
                 let detector = Unmanaged<GlobalDoubleCmdCDetector>.fromOpaque(refcon).takeUnretainedValue()
                 return detector.eventCallback(proxy: proxy, type: type, event: event)
             },
-            userInfo: Unmanaged.passUnretained(self).toOpaque()
+            userInfo: retained.toOpaque()
         ) else {
             logger.error("Failed to create event tap")
+            retained.release()
             return false
         }
 
         self.eventTap = eventTap
+        self.retainedSelf = retained
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+        CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: eventTap, enable: true)
 
         logger.info("Global double Cmd+C detector started")
@@ -138,6 +144,7 @@ class GlobalDoubleCmdCDetector {
 
     private func startPermissionPolling() {
         permissionTimer?.invalidate()
+        permissionPollCount = 0
         logger.info("Starting permission polling...")
         permissionTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
             guard let self = self else {
@@ -145,13 +152,18 @@ class GlobalDoubleCmdCDetector {
                 return
             }
 
-            self.logger.info("Checking accessibility permission...")
-            if checkAccessibilityPermission() {
+            self.permissionPollCount += 1
+            self.logger.info("Checking accessibility permission (poll \(self.permissionPollCount)/\(self.maxPermissionPolls))...")
+
+            if self.checkAccessibilityPermission() {
                 timer.invalidate()
                 self.permissionTimer = nil
                 self.logger.info("Permission granted!")
-
                 _ = self.startEventTap()
+            } else if self.permissionPollCount >= self.maxPermissionPolls {
+                timer.invalidate()
+                self.permissionTimer = nil
+                self.logger.warning("Permission polling timed out after \(self.maxPermissionPolls) attempts")
             }
         }
     }
@@ -174,12 +186,8 @@ class GlobalDoubleCmdCDetector {
             alert.addButton(withTitle: NSLocalizedString("alert.accessibility.button.later", value: "Later", comment: ""))
 
             if alert.runModal() == .alertFirstButtonReturn {
-                // Register app in Accessibility list, then open Settings
-                _ = self.requestAccessibilityPermission()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-                        NSWorkspace.shared.open(url)
-                    }
+                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                    NSWorkspace.shared.open(url)
                 }
             }
             self.startPermissionPolling()

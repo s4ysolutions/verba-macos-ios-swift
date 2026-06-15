@@ -35,33 +35,43 @@ public final class KeychainAuthKeyRepository: AuthKeyRepository, @unchecked Send
     // MARK: - Private — Key management
 
     private func loadExistingKeyPair() throws -> KeyPair? {
+        let tagData = keyTag.data(using: .utf8)!
         let query: [String: Any] = [
             kSecClass as String: kSecClassKey,
             kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
             kSecAttrKeyClass as String: kSecAttrKeyClassPrivate,
-            kSecAttrApplicationTag as String: keyTag.data(using: .utf8)!,
+            kSecAttrApplicationTag as String: tagData,
             kSecReturnRef as String: true,
         ]
-
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
-
         if status == errSecItemNotFound { return nil }
         guard status == errSecSuccess else { throw AuthError.keychainError(status) }
-        let privateKey = item as! SecKey // Security framework guarantees SecKey when kSecReturnRef + kSecAttrKeyClassPrivate
-        return try buildKeyPair(privateKey: privateKey)
+        return try buildKeyPair(privateKey: item as! SecKey)
     }
 
     private func generateAndStoreKeyPair() throws -> KeyPair {
         let tagData = keyTag.data(using: .utf8)!
 
+        // Build ACL that pre-authorizes this app so macOS never prompts for sign operations.
+        var access: SecAccess?
+        var trustedApp: SecTrustedApplication?
+        SecTrustedApplicationCreateFromPath(nil, &trustedApp)  // nil = current app
+        if let app = trustedApp {
+            SecAccessCreate("Verba Auth Key" as CFString, [app] as CFArray, &access)
+        }
+
+        var privateKeyAttrs: [String: Any] = [
+            kSecAttrIsPermanent as String: true,
+            kSecAttrApplicationTag as String: tagData,
+            kSecAttrLabel as String: "Verba Auth Key",
+        ]
+        if let access { privateKeyAttrs[kSecAttrAccess as String] = access }
+
         let params: [String: Any] = [
             kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
             kSecAttrKeySizeInBits as String: 2048,
-            kSecPrivateKeyAttrs as String: [
-                kSecAttrIsPermanent as String: true,
-                kSecAttrApplicationTag as String: tagData,
-            ],
+            kSecPrivateKeyAttrs as String: privateKeyAttrs,
         ]
 
         var cfError: Unmanaged<CFError>?
