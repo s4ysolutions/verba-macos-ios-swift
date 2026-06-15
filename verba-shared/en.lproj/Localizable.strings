@@ -25,3 +25,8 @@
 "alert.quit.button.quit" = "Quit";
 "alert.quit.button.hide" = "Hide";
 "alert.quit.button.cancel" = "Cancel";
+
+"alert.accessibility.title" = "Accessibility Access Required";
+"alert.accessibility.message" = "Verba needs Accessibility permission to detect the double Cmd+C shortcut while other apps are active.\n\nClick \"Open Settings\" below, then find Verba in the Accessibility list and enable it (click + to add if not listed).";
+"alert.accessibility.button.ok" = "Open Settings";
+"alert.accessibility.button.later" = "Later";

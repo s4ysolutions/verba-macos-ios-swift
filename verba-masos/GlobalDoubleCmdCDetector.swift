@@ -17,10 +17,9 @@ class GlobalDoubleCmdCDetector {
     func start() -> Bool {
         guard checkAccessibilityPermission() else {
             showAccessibilityAlert()
-            startPermissionPolling()
             return false
         }
-        startEventTap()
+        _ = startEventTap()
 
         return true
     }
@@ -152,12 +151,7 @@ class GlobalDoubleCmdCDetector {
                 self.permissionTimer = nil
                 self.logger.info("Permission granted!")
 
-                // Start the event tap now
-                if self.startEventTap() {
-                    DispatchQueue.main.async {
-                        self.showSuccessAlert()
-                    }
-                }
+                _ = self.startEventTap()
             }
         }
     }
@@ -165,46 +159,31 @@ class GlobalDoubleCmdCDetector {
     private func showAccessibilityAlert() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             let alert = NSAlert()
-            alert.messageText = "Accessibility Access Required"
-            alert.informativeText = """
-            This app needs accessibility permission to detect keyboard shortcuts globally.
-
-            Please:
-            1. Click "Open System Settings" in the system dialog
-            2. Find this app in the list
-            3. Toggle the switch to enable access
-            4. Restart the app
-            """
+            alert.messageText = NSLocalizedString(
+                "alert.accessibility.title",
+                value: "Accessibility Access Required",
+                comment: "Accessibility permission alert title"
+            )
+            alert.informativeText = NSLocalizedString(
+                "alert.accessibility.message",
+                value: "Verba needs Accessibility permission to detect the double Cmd+C shortcut while other apps are active.\n\nClick OK to open Privacy & Security settings. Enable Verba in the Accessibility list (click + to add it if not listed).",
+                comment: "Accessibility permission alert message"
+            )
             alert.alertStyle = .informational
-            alert.addButton(withTitle: "OK")
+            alert.addButton(withTitle: NSLocalizedString("alert.accessibility.button.ok", value: "Open Settings", comment: ""))
+            alert.addButton(withTitle: NSLocalizedString("alert.accessibility.button.later", value: "Later", comment: ""))
+
             if alert.runModal() == .alertFirstButtonReturn {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    /*
-                     if let url = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension") {
-                         NSWorkspace.shared.open(url)
-                     } else {*/
+                // Register app in Accessibility list, then open Settings
+                _ = self.requestAccessibilityPermission()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
                         NSWorkspace.shared.open(url)
                     }
-                    // }
                 }
             }
+            self.startPermissionPolling()
         }
-    }
-
-    private func showSuccessAlert() {
-        let alert = NSAlert()
-        alert.messageText = "Ready to Go!"
-        alert.informativeText = """
-        Accessibility permission has been granted!
-
-        Global keyboard shortcut detection is now active.
-
-        Try it: Press Cmd+C twice quickly to trigger the action.
-        """
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "Awesome!")
-        alert.runModal()
     }
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "verba-masos", category: "GlobalDoubleCmdCDetector")

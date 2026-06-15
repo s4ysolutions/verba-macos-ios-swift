@@ -22,3 +22,8 @@
 "alert.quit.button.hide" = "Sakrij";
 "alert.quit.button.cancel" = "Otkaži";
 
+"alert.accessibility.title" = "Potreban pristup za pristupačnost";
+"alert.accessibility.message" = "Verba treba dozvolu za Pristupačnost kako bi prepoznala dupli Cmd+C prečicu dok su druge aplikacije aktivne.\n\nKliknite \"Otvori podešavanja\" da otvorite Privatnost i bezbednost. Uključite Verbu u listi Pristupačnost (kliknite + da je dodate ako nije na listi).";
+"alert.accessibility.button.ok" = "Otvori podešavanja";
+"alert.accessibility.button.later" = "Kasnije";
+
