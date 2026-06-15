@@ -1,0 +1,47 @@
+name: macOS Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: macos-14  # Apple Silicon (M1)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -project verba-apple.xcodeproj \
+            -scheme verba-masos \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -archivePath "$RUNNER_TEMP/Verba.xcarchive" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Export
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Verba.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist .github/ExportOptions.plist
+
+      - name: Package
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            "$RUNNER_TEMP/export/Verba.app" \
+            "$RUNNER_TEMP/Verba-macOS-arm64.zip"
+
+      - name: Attach to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "$RUNNER_TEMP/Verba-macOS-arm64.zip" \
+            --clobber
